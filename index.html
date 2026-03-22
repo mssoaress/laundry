@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#1e3a8a">
+  <title>Lavanderia Emanoel</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-inner">
+      <div class="loading-logo">💧</div>
+      <div class="loading-spinner"></div>
+      <p id="loading-msg">Conectando...</p>
+    </div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="header-brand">
+        <span class="header-drop">💧</span>
+        <div>
+          <h1 class="header-title">Emanoel</h1>
+          <span class="header-sub">Lavanderia</span>
+        </div>
+      </div>
+      <span class="header-phone">(83) 98126-7379</span>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="page active">
+      <div class="page-header">
+        <h2 class="page-title">Dashboard</h2>
+        <span class="page-date" id="dash-date"></span>
+      </div>
+      <div class="metrics" id="metrics-cards"></div>
+      <div class="section-label">Saldo em aberto</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Total</th><th>Aberto</th><th>Status</th></tr></thead>
+            <tbody id="tbl-aberto"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="section-label">Últimos lançamentos</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Data</th><th>Cliente</th><th>Peça</th><th>Qtd</th><th>Total</th></tr></thead>
+            <tbody id="tbl-ultimos"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CLIENTES -->
+    <div id="clientes" class="page">
+      <div class="page-header">
+        <h2 class="page-title">Clientes</h2>
+        <button class="btn-icon" onclick="toggleForm('form-cliente')">＋</button>
+      </div>
+      <div class="form-card" id="form-cliente" style="display:none">
+        <div class="form-card-title">Novo cliente</div>
+        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome completo"></div>
+        <div class="form-group"><label>Telefone</label><input id="c-tel" placeholder="(83) 00000-0000"></div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="salvarCliente()">Salvar</button>
+          <button class="btn-ghost" onclick="toggleForm('form-cliente')">Cancelar</button>
+        </div>
+      </div>
+      <div id="client-list"></div>
+    </div>
+
+    <!-- LANÇAMENTOS -->
+    <div id="lancamentos" class="page">
+      <div class="page-header">
+        <h2 class="page-title">Lançamentos</h2>
+        <button class="btn-icon" onclick="toggleForm('form-lanc')">＋</button>
+      </div>
+      <div class="form-card" id="form-lanc" style="display:none">
+        <div class="form-card-title">Novo lançamento</div>
+        <div class="form-group"><label>Cliente</label><select id="l-cliente"></select></div>
+        <div class="form-group"><label>Data</label><input type="date" id="l-data"></div>
+        <div class="form-group"><label>Peça</label><input id="l-peca" placeholder="Ex: Shorts, Calças..."></div>
+        <div class="form-group"><label>Lavado</label><select id="l-lavado"></select></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Quantidade</label><input type="number" id="l-qtd" placeholder="0" oninput="updatePreview()"></div>
+          <div class="form-group"><label>Valor un. (R$)</label><input type="number" id="l-valor" placeholder="0,00" step="0.01" oninput="updatePreview()"></div>
+        </div>
+        <div id="l-preview" class="preview-total"></div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="salvarLancamento()">Salvar</button>
+          <button class="btn-ghost" onclick="toggleForm('form-lanc')">Cancelar</button>
+        </div>
+      </div>
+      <div class="filter-bar">
+        <select id="f-cliente" onchange="renderLancamentos()"></select>
+        <select id="f-mes" onchange="renderLancamentos()">
+          <option value="">Todos meses</option>
+          <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+          <option value="03">Março</option><option value="04">Abril</option>
+          <option value="05">Maio</option><option value="06">Junho</option>
+          <option value="07">Julho</option><option value="08">Agosto</option>
+          <option value="09">Setembro</option><option value="10">Outubro</option>
+          <option value="11">Novembro</option><option value="12">Dezembro</option>
+        </select>
+      </div>
+      <div id="lanc-list"></div>
+    </div>
+
+    <!-- RELATÓRIO -->
+    <div id="relatorio" class="page">
+      <div class="page-header">
+        <h2 class="page-title">Relatório</h2>
+        <select id="r-mes" class="select-inline" onchange="renderRelatorio()">
+          <option value="01">Jan</option><option value="02">Fev</option>
+          <option value="03">Mar</option><option value="04">Abr</option>
+          <option value="05">Mai</option><option value="06">Jun</option>
+          <option value="07">Jul</option><option value="08">Ago</option>
+          <option value="09">Set</option><option value="10">Out</option>
+          <option value="11">Nov</option><option value="12">Dez</option>
+        </select>
+      </div>
+      <div class="metrics" id="r-metrics"></div>
+      <div class="section-label">Peças por cliente</div>
+      <div class="card"><div id="r-barras"></div></div>
+      <div class="section-label">Detalhamento</div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="chk-all" onclick="toggleAllChk()"></th>
+                <th>Cliente</th><th>Peças</th><th>Fat.</th><th>Aberto</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="tbl-relatorio"></tbody>
+          </table>
+        </div>
+        <div id="bulk-actions" class="bulk-bar" style="display:none">
+          <span id="bulk-label"></span>
+          <button class="btn-primary btn-sm" onclick="marcarSelecionadosPago()">✓ Marcar pago</button>
+          <button class="btn-ghost btn-sm" onclick="desmarcarTodos()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PENDENTES -->
+    <div id="pendentes" class="page">
+      <div class="page-header">
+        <h2 class="page-title">Pendentes</h2>
+        <span id="pendentes-total" class="badge-total"></span>
+      </div>
+      <div class="metrics" id="pendentes-metrics"></div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th><input type="checkbox" id="chk-pend-all" onclick="toggleAllPendChk()"></th>
+                <th>Cliente</th><th>Aberto</th><th>Último</th><th></th>
+              </tr>
+            </thead>
+            <tbody id="tbl-pendentes"></tbody>
+          </table>
+        </div>
+        <div id="pend-bulk-actions" class="bulk-bar" style="display:none">
+          <span id="pend-bulk-label"></span>
+          <button class="btn-primary btn-sm" onclick="marcarPendentesPago()">✓ Quitar</button>
+          <button class="btn-ghost btn-sm" onclick="desmarcarPendentes()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LAVADOS -->
+    <div id="lavados" class="page">
+      <div class="page-header">
+        <h2 class="page-title">Tipos de Lavado</h2>
+        <button class="btn-icon" onclick="toggleForm('form-lavado')">＋</button>
+      </div>
+      <div class="form-card" id="form-lavado" style="display:none">
+        <div class="form-card-title">Novo lavado</div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Nome</label><input id="lv-nome" placeholder="Ex: Stone..."></div>
+          <div class="form-group"><label>Valor padrão (R$)</label><input type="number" id="lv-valor" placeholder="0,00" step="0.01"></div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="salvarLavado()">Salvar</button>
+          <button class="btn-ghost" onclick="toggleForm('form-lavado')">Cancelar</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Lavado</th><th>Valor</th><th>Usos</th><th></th></tr></thead>
+            <tbody id="tbl-lavados"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+      <span class="nav-icon">⊞</span>
+      <span class="nav-label">Início</span>
+    </button>
+    <button class="nav-item" onclick="showPage('clientes')" data-page="clientes">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Clientes</span>
+    </button>
+    <button class="nav-item nav-item-center" onclick="showPage('lancamentos')" data-page="lancamentos">
+      <span class="nav-icon-center">＋</span>
+    </button>
+    <button class="nav-item" onclick="showPage('pendentes')" data-page="pendentes">
+      <span class="nav-icon">⚠</span>
+      <span class="nav-label">Pendentes</span>
+    </button>
+    <button class="nav-item" onclick="showPage('relatorio')" data-page="relatorio">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">Relatório</span>
+    </button>
+  </nav>
+
+  <!-- FAB LAVADOS -->
+  <button class="fab" onclick="showPage('lavados')" title="Tipos de lavado">🧺</button>
+
+  <!-- MODAL -->
+  <div id="modal-bg" class="modal-bg" style="display:none" onclick="closeModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Registrar pagamento</div>
+      <div class="form-group"><label>Cliente</label><input id="m-cliente" disabled></div>
+      <div class="form-group"><label>Em aberto</label><input id="m-aberto" disabled class="input-danger"></div>
+      <div class="form-group"><label>Valor pago (R$)</label><input type="number" id="m-valor" placeholder="0,00" step="0.01"></div>
+      <div class="form-actions">
+        <button class="btn-primary" onclick="confirmarPagamento()">Confirmar</button>
+        <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
