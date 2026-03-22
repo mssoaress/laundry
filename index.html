@@ -8,28 +8,20 @@
   <meta name="theme-color" content="#1e3a8a">
   <title>Lavanderia Emanoel</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-inner">
-      <div class="loading-logo">💧</div>
-      <div class="loading-spinner"></div>
+      <img src="img/logo.jpg" alt="Logo" class="loading-logo-img">
       <p id="loading-msg">Conectando...</p>
     </div>
   </div>
 
   <header class="header">
     <div class="header-content">
-      <div class="header-brand">
-        <span class="header-drop">💧</span>
-        <div>
-          <h1 class="header-title">Emanoel</h1>
-          <span class="header-sub">Lavanderia</span>
-        </div>
-      </div>
-      <span class="header-phone">(83) 98126-7379</span>
+      <img src="img/logo.jpg" alt="Lavanderia Emanoel" class="header-logo">
     </div>
   </header>
 
@@ -38,7 +30,7 @@
     <!-- DASHBOARD -->
     <div id="dashboard" class="page active">
       <div class="page-header">
-        <h2 class="page-title">Dashboard</h2>
+        <h2 class="page-title">Painel Inicial</h2>
         <span class="page-date" id="dash-date"></span>
       </div>
       <div class="metrics" id="metrics-cards"></div>
@@ -51,7 +43,7 @@
           </table>
         </div>
       </div>
-      <div class="section-label">Últimos lançamentos</div>
+      <div class="section-label">Últimas fichas</div>
       <div class="card">
         <div class="table-wrap">
           <table>
@@ -80,14 +72,31 @@
       <div id="client-list"></div>
     </div>
 
+
+    <!-- CLIENTE DETALHE -->
+    <div id="cliente-detalhe" class="page">
+      <div class="page-header">
+        <button class="btn-back" onclick="showPage('clientes')">← Voltar</button>
+        <button class="btn-icon" onclick="abrirModalDetalhe()">+ Pgto</button>
+      </div>
+      <div id="detalhe-header" class="detalhe-header"></div>
+      <div id="detalhe-resumo" class="detalhe-resumo"></div>
+      <div class="section-label">Fichas em aberto</div>
+      <div id="detalhe-fichas-abertas"></div>
+      <div class="section-label">Pagamentos realizados</div>
+      <div id="detalhe-pagamentos"></div>
+      <div class="section-label">Todas as fichas</div>
+      <div id="detalhe-todas-fichas"></div>
+    </div>
+
     <!-- LANÇAMENTOS -->
     <div id="lancamentos" class="page">
       <div class="page-header">
-        <h2 class="page-title">Lançamentos</h2>
+        <h2 class="page-title">Fichas</h2>
         <button class="btn-icon" onclick="toggleForm('form-lanc')">＋</button>
       </div>
       <div class="form-card" id="form-lanc" style="display:none">
-        <div class="form-card-title">Novo lançamento</div>
+        <div class="form-card-title">Nova ficha</div>
         <div class="form-group"><label>Cliente</label><select id="l-cliente"></select></div>
         <div class="form-group"><label>Data</label><input type="date" id="l-data"></div>
         <div class="form-group"><label>Peça</label><input id="l-peca" placeholder="Ex: Shorts, Calças..."></div>
@@ -98,7 +107,7 @@
         </div>
         <div id="l-preview" class="preview-total"></div>
         <div class="form-actions">
-          <button class="btn-primary" onclick="salvarLancamento()">Salvar</button>
+          <button class="btn-primary" onclick="salvarLancamento()">Salvar ficha</button>
           <button class="btn-ghost" onclick="toggleForm('form-lanc')">Cancelar</button>
         </div>
       </div>
@@ -220,8 +229,9 @@
       <span class="nav-icon">👤</span>
       <span class="nav-label">Clientes</span>
     </button>
-    <button class="nav-item nav-item-center" onclick="showPage('lancamentos')" data-page="lancamentos">
-      <span class="nav-icon-center">＋</span>
+    <button class="nav-item" onclick="showPage('lancamentos')" data-page="lancamentos">
+      <span class="nav-icon">🗂️</span>
+      <span class="nav-label">Fichas</span>
     </button>
     <button class="nav-item" onclick="showPage('pendentes')" data-page="pendentes">
       <span class="nav-icon">⚠</span>
@@ -231,10 +241,11 @@
       <span class="nav-icon">📊</span>
       <span class="nav-label">Relatório</span>
     </button>
+    <button class="nav-item" onclick="showPage('lavados')" data-page="lavados">
+      <span class="nav-icon">🧺</span>
+      <span class="nav-label">Lavados</span>
+    </button>
   </nav>
-
-  <!-- FAB LAVADOS -->
-  <button class="fab" onclick="showPage('lavados')" title="Tipos de lavado">🧺</button>
 
   <!-- MODAL -->
   <div id="modal-bg" class="modal-bg" style="display:none" onclick="closeModal()">
