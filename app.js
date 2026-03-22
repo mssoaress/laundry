@@ -79,7 +79,7 @@ function showPage(id){
   ({dashboard:renderDashboard,clientes:renderClientes,lancamentos:renderLancamentos,relatorio:renderRelatorio,pendentes:renderPendentes,lavados:renderLavados})[id]?.();
 }
 function refreshCurrentPage(){
-  ({dashboard:renderDashboard,clientes:renderClientes,lancamentos:renderLancamentos,relatorio:renderRelatorio,pendentes:renderPendentes,lavados:renderLavados})[paginaAtual]?.();
+  ({dashboard:renderDashboard,clientes:renderClientes,lancamentos:renderLancamentos,relatorio:renderRelatorio,pendentes:renderPendentes,lavados:renderLavados,'cliente-detalhe':()=>{}})[paginaAtual]?.();
 }
 
 function toggleForm(id){
@@ -124,12 +124,12 @@ function renderDashboard(){
     const badge=ab===0?'<span class="badge badge-green">Pago</span>':ab<500?'<span class="badge badge-amber">Parcial</span>':'<span class="badge badge-red">Aberto</span>';
     rowsAberto+=`<tr><td><div class="client-row"><div class="avatar">${initials(c.nome)}</div>${c.nome}</div></td><td>${fmt(tot)}</td><td>${fmt(ab)}</td><td>${badge}</td></tr>`;
   });
-  document.getElementById('tbl-aberto').innerHTML=rowsAberto||'<tr class="empty-row"><td colspan="4">Sem lançamentos ainda</td></tr>';
+  document.getElementById('tbl-aberto').innerHTML=rowsAberto||'<tr class="empty-row"><td colspan="4">Sem fichas ainda</td></tr>';
   let rowsUlt='';
   [...db.lancamentos].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,6).forEach(l=>{
     rowsUlt+=`<tr><td>${formatDate(l.data)}</td><td>${nomeCliente(l.cid)}</td><td>${l.peca}</td><td>${fmtN(l.qtd)}</td><td>${fmt(l.qtd*l.valor)}</td></tr>`;
   });
-  document.getElementById('tbl-ultimos').innerHTML=rowsUlt||'<tr class="empty-row"><td colspan="5">Nenhum lançamento</td></tr>';
+  document.getElementById('tbl-ultimos').innerHTML=rowsUlt||'<tr class="empty-row"><td colspan="5">Nenhum ficha</td></tr>';
 }
 
 function renderClientes(){
@@ -139,7 +139,7 @@ function renderClientes(){
   if(db.clientes.length===0){list.innerHTML='<div style="text-align:center;padding:2.5rem;color:var(--text-4);font-size:0.85rem">Nenhum cliente cadastrado</div>';return;}
   list.innerHTML=db.clientes.sort((a,b)=>a.nome.localeCompare(b.nome)).map(c=>{
     const pm=pecasMes(c.id,mes),tot=totalLanc(c.id),ab=totalAberto(c.id);
-    return `<div class="client-card">
+    return `<div class="client-card" onclick="abrirDetalheCliente('${c.id}')" style="cursor:pointer">
       <div class="avatar" style="width:40px;height:40px;font-size:13px;flex-shrink:0">${initials(c.nome)}</div>
       <div class="client-card-info">
         <div class="client-card-name">${c.nome}</div>
@@ -184,7 +184,7 @@ function renderLancamentos(){
   if(fcid)lancs=lancs.filter(l=>l.cid==fcid);
   if(fmes)lancs=lancs.filter(l=>l.data.substring(5,7)===fmes);
   const container=document.getElementById('lanc-list');
-  if(lancs.length===0){container.innerHTML='<div style="text-align:center;padding:2.5rem;color:var(--text-4);font-size:0.85rem">Nenhum lançamento</div>';return;}
+  if(lancs.length===0){container.innerHTML='<div style="text-align:center;padding:2.5rem;color:var(--text-4);font-size:0.85rem">Nenhum ficha</div>';return;}
   const total=lancs.reduce((s,l)=>s+l.qtd*l.valor,0);
   const pecas=lancs.reduce((s,l)=>s+l.qtd,0);
   container.innerHTML=lancs.map(l=>`
@@ -258,7 +258,7 @@ function renderRelatorio(){
       <td><button class="btn-quitar" onclick="abrirModal('${c.id}')">Pgto</button></td>
     </tr>`;
   });
-  document.getElementById('tbl-relatorio').innerHTML=rows||'<tr class="empty-row"><td colspan="6">Nenhum lançamento</td></tr>';
+  document.getElementById('tbl-relatorio').innerHTML=rows||'<tr class="empty-row"><td colspan="6">Nenhum ficha</td></tr>';
   document.getElementById('bulk-actions').style.display='none';
   const chkAll=document.getElementById('chk-all');if(chkAll)chkAll.checked=false;
 }
@@ -387,3 +387,131 @@ window.updatePendBulk=updatePendBulk;
 
 showLoading('Conectando...');
 migrarDadosIniciais().then(()=>iniciarListeners());
+
+/* ===== CLIENTE DETALHE ===== */
+let clienteDetalheId = null;
+
+function abrirDetalheCliente(cid) {
+  clienteDetalheId = cid;
+  renderDetalheCliente(cid);
+  // Navigate to detail page without nav highlight
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.getElementById('cliente-detalhe').classList.add('active');
+  paginaAtual = 'cliente-detalhe';
+}
+
+function renderDetalheCliente(cid) {
+  const c = db.clientes.find(x => x.id == cid);
+  if (!c) return;
+
+  const fichas = db.lancamentos.filter(l => l.cid == cid).sort((a,b) => b.data.localeCompare(a.data));
+  const pagamentos = db.pagamentos.filter(p => p.cid == cid).sort((a,b) => b.data.localeCompare(a.data));
+  const totalFat = totalLanc(cid);
+  const totalPg  = totalPago(cid);
+  const ab       = totalAberto(cid);
+  const totalPcs = fichas.reduce((s,l) => s+l.qtd, 0);
+
+  // Header
+  document.getElementById('detalhe-header').innerHTML = `
+    <div class="detalhe-avatar">${initials(c.nome)}</div>
+    <div>
+      <div class="detalhe-nome">${c.nome}</div>
+      <div class="detalhe-tel">${c.tel || 'Sem telefone'}</div>
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:2px">${fichas.length} ficha${fichas.length!==1?'s':''} · ${fmtN(totalPcs)} peças</div>
+    </div>`;
+
+  // Resumo
+  document.getElementById('detalhe-resumo').innerHTML = `
+    <div class="detalhe-stat">
+      <div class="lbl">Faturado</div>
+      <div class="val">${fmt(totalFat)}</div>
+    </div>
+    <div class="detalhe-stat">
+      <div class="lbl">Pago</div>
+      <div class="val success">${fmt(totalPg)}</div>
+    </div>
+    <div class="detalhe-stat">
+      <div class="lbl">Em aberto</div>
+      <div class="val ${ab>0?'danger':''}">${fmt(ab)}</div>
+    </div>`;
+
+  // Fichas em aberto (não pagas)
+  const fichasAbertas = fichas.filter(() => ab > 0);
+  let htmlAbertas = '';
+  if (ab <= 0) {
+    htmlAbertas = '<div class="empty-detalhe" style="color:var(--success)">✓ Tudo pago!</div>';
+  } else {
+    // Show all fichas since we don't track per-ficha payment
+    fichas.forEach(l => {
+      htmlAbertas += `<div class="ficha-aberta-card">
+        <div class="ficha-aberta-top">
+          <span class="ficha-aberta-peca">${l.peca}</span>
+          <span class="ficha-aberta-valor">${fmt(l.qtd*l.valor)}</span>
+        </div>
+        <div class="ficha-aberta-meta">${fmtN(l.qtd)} peças · ${l.lavado} · ${formatDate(l.data)}</div>
+      </div>`;
+    });
+    htmlAbertas += `<div style="margin-top:8px">
+      <button class="btn-primary" style="width:100%;padding:13px" onclick="abrirModalDetalhe()">
+        Registrar pagamento — ${fmt(ab)}
+      </button>
+    </div>`;
+  }
+  document.getElementById('detalhe-fichas-abertas').innerHTML = htmlAbertas;
+
+  // Pagamentos realizados
+  let htmlPgtos = '';
+  if (pagamentos.length === 0) {
+    htmlPgtos = '<div class="empty-detalhe">Nenhum pagamento registrado</div>';
+  } else {
+    pagamentos.forEach(p => {
+      htmlPgtos += `<div class="pgto-card">
+        <div>
+          <div class="pgto-card-info">Pagamento registrado</div>
+          <div class="pgto-card-data">${formatDate(p.data)}</div>
+        </div>
+        <div class="pgto-card-valor">+ ${fmt(p.valor)}</div>
+      </div>`;
+    });
+  }
+  document.getElementById('detalhe-pagamentos').innerHTML = htmlPgtos;
+
+  // Todas as fichas
+  let htmlTodas = '';
+  if (fichas.length === 0) {
+    htmlTodas = '<div class="empty-detalhe">Nenhuma ficha ainda</div>';
+  } else {
+    fichas.forEach(l => {
+      htmlTodas += `<div class="lanc-card">
+        <div class="lanc-card-left">
+          <div class="lanc-card-peca">${l.peca}</div>
+          <div class="lanc-card-meta">${fmtN(l.qtd)} peças</div>
+          <span class="lanc-tipo-chip">${l.lavado}</span>
+        </div>
+        <div class="lanc-card-right">
+          <div class="lanc-card-total">${fmt(l.qtd*l.valor)}</div>
+          <div class="lanc-card-date">${formatDate(l.data)}</div>
+          <button class="btn-danger-sm" style="margin-top:5px" onclick="deletarLanc('${l.id}')">✕</button>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('detalhe-todas-fichas').innerHTML = htmlTodas;
+}
+
+function abrirModalDetalhe() {
+  if (clienteDetalheId) abrirModal(clienteDetalheId);
+}
+
+// Override closeModal to refresh detalhe if open
+const _closeModal = closeModal;
+window.closeModal = function() {
+  _closeModal();
+  if (paginaAtual === 'cliente-detalhe' && clienteDetalheId) {
+    renderDetalheCliente(clienteDetalheId);
+  }
+};
+
+window.abrirDetalheCliente = abrirDetalheCliente;
+window.abrirModalDetalhe = abrirModalDetalhe;
