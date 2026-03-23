@@ -197,7 +197,10 @@ function renderLancamentos(){
       <div class="lanc-card-right">
         <div class="lanc-card-total">${fmt(l.qtd*l.valor)}</div>
         <div class="lanc-card-date">${formatDate(l.data)}</div>
-        <button class="btn-danger-sm" style="margin-top:5px" onclick="deletarLanc('${l.id}')">✕</button>
+        <div style="display:flex;gap:5px;margin-top:5px">
+          <button class="btn-edit-sm" onclick="editarFicha('${l.id}')">✏️</button>
+          <button class="btn-danger-sm" onclick="deletarLanc('${l.id}')">✕</button>
+        </div>
       </div>
     </div>`).join('')+
     `<div class="card" style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:6px">
@@ -492,7 +495,10 @@ function renderDetalheCliente(cid) {
         <div class="lanc-card-right">
           <div class="lanc-card-total">${fmt(l.qtd*l.valor)}</div>
           <div class="lanc-card-date">${formatDate(l.data)}</div>
-          <button class="btn-danger-sm" style="margin-top:5px" onclick="deletarLanc('${l.id}')">✕</button>
+          <div style="display:flex;gap:5px;margin-top:5px">
+          <button class="btn-edit-sm" onclick="editarFicha('${l.id}')">✏️</button>
+          <button class="btn-danger-sm" onclick="deletarLanc('${l.id}')">✕</button>
+        </div>
         </div>
       </div>`;
     });
@@ -515,3 +521,64 @@ window.closeModal = function() {
 
 window.abrirDetalheCliente = abrirDetalheCliente;
 window.abrirModalDetalhe = abrirModalDetalhe;
+
+/* ===== EDITAR FICHA ===== */
+let editFichaId = null;
+
+function editarFicha(id) {
+  const l = db.lancamentos.find(x => x.id == id);
+  if (!l) return;
+  editFichaId = id;
+
+  document.getElementById('e-peca').value  = l.peca;
+  document.getElementById('e-data').value  = l.data;
+  document.getElementById('e-qtd').value   = l.qtd;
+  document.getElementById('e-valor').value = l.valor;
+
+  // Populate lavado select
+  const sel = document.getElementById('e-lavado');
+  sel.innerHTML = '';
+  db.lavados.sort((a,b) => a.nome.localeCompare(b.nome)).forEach(lv => {
+    const o = document.createElement('option');
+    o.value = lv.nome; o.textContent = lv.nome;
+    sel.appendChild(o);
+  });
+  sel.value = l.lavado;
+
+  updateEditPreview();
+  document.getElementById('modal-edit-bg').style.display = 'flex';
+}
+
+function updateEditPreview() {
+  const qtd   = parseInt(document.getElementById('e-qtd').value)   || 0;
+  const valor = parseFloat(document.getElementById('e-valor').value) || 0;
+  document.getElementById('e-preview').textContent = qtd * valor > 0 ? `Total: ${fmt(qtd * valor)}` : '';
+}
+
+function closeEditModal() {
+  document.getElementById('modal-edit-bg').style.display = 'none';
+  editFichaId = null;
+}
+
+async function salvarEdicaoFicha() {
+  const peca  = document.getElementById('e-peca').value.trim();
+  const lavado= document.getElementById('e-lavado').value;
+  const data  = document.getElementById('e-data').value;
+  const qtd   = parseInt(document.getElementById('e-qtd').value);
+  const valor = parseFloat(document.getElementById('e-valor').value);
+
+  if (!peca || !data || !qtd || !valor) { alert('Preencha todos os campos!'); return; }
+
+  const fichaOriginal = db.lancamentos.find(x => x.id == editFichaId);
+  await salvarDoc('lancamentos', editFichaId, {
+    ...fichaOriginal,
+    peca, lavado, data, qtd, valor
+  });
+
+  closeEditModal();
+}
+
+window.editarFicha       = editarFicha;
+window.closeEditModal    = closeEditModal;
+window.salvarEdicaoFicha = salvarEdicaoFicha;
+window.updateEditPreview = updateEditPreview;
