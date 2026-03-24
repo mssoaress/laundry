@@ -126,7 +126,7 @@ function renderDashboard(){
   });
   document.getElementById('tbl-aberto').innerHTML=rowsAberto||'<tr class="empty-row"><td colspan="4">Sem fichas ainda</td></tr>';
   let rowsUlt='';
-  [...db.lancamentos].sort((a,b)=>b.data.localeCompare(a.data)).slice(0,6).forEach(l=>{
+  [...db.lancamentos].sort((a,b)=>b.id.localeCompare(a.id)).slice(0,6).forEach(l=>{
     rowsUlt+=`<tr><td>${formatDate(l.data)}</td><td>${nomeCliente(l.cid)}</td><td>${l.peca}</td><td>${fmtN(l.qtd)}</td><td>${fmt(l.qtd*l.valor)}</td></tr>`;
   });
   document.getElementById('tbl-ultimos').innerHTML=rowsUlt||'<tr class="empty-row"><td colspan="5">Nenhum ficha</td></tr>';
@@ -180,7 +180,7 @@ function renderLancamentos(){
   populateSelects();
   const fcid=document.getElementById('f-cliente').value;
   const fmes=document.getElementById('f-mes').value;
-  let lancs=[...db.lancamentos].sort((a,b)=>b.data.localeCompare(a.data));
+  let lancs=[...db.lancamentos].sort((a,b)=>b.id.localeCompare(a.id));
   if(fcid)lancs=lancs.filter(l=>l.cid==fcid);
   if(fmes)lancs=lancs.filter(l=>l.data.substring(5,7)===fmes);
   const container=document.getElementById('lanc-list');
@@ -408,7 +408,7 @@ function renderDetalheCliente(cid) {
   const c = db.clientes.find(x => x.id == cid);
   if (!c) return;
 
-  const fichas = db.lancamentos.filter(l => l.cid == cid).sort((a,b) => b.data.localeCompare(a.data));
+  const fichas = db.lancamentos.filter(l => l.cid == cid).sort((a,b) => b.id.localeCompare(a.id));
   const pagamentos = db.pagamentos.filter(p => p.cid == cid).sort((a,b) => b.data.localeCompare(a.data));
   const totalFat = totalLanc(cid);
   const totalPg  = totalPago(cid);
