@@ -82,10 +82,19 @@ function refreshCurrentPage(){
   ({dashboard:renderDashboard,clientes:renderClientes,lancamentos:renderLancamentos,relatorio:renderRelatorio,pendentes:renderPendentes,lavados:renderLavados,'cliente-detalhe':()=>{}})[paginaAtual]?.();
 }
 
-function toggleForm(id){
+function toggleForm(id, preSelectCid){
   const el=document.getElementById(id);
   el.style.display=el.style.display==='none'?'block':'none';
-  if(el.style.display==='block'){populateSelects();populateLavadoSelect();}
+  if(el.style.display==='block'){
+    populateSelects();
+    populateLavadoSelect();
+    if(preSelectCid){
+      const sel=document.getElementById('l-cliente');
+      if(sel) sel.value=preSelectCid;
+    }
+    // Scroll to form
+    setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),100);
+  }
 }
 function populateSelects(){
   ['l-cliente','f-cliente'].forEach(sid=>{
@@ -227,6 +236,11 @@ async function salvarLancamento(){
   document.getElementById('l-peca').value='';document.getElementById('l-qtd').value='';
   document.getElementById('l-valor').value='';document.getElementById('l-preview').textContent='';
   toggleForm('form-lanc');
+  // Se veio de um cliente específico, volta para o detalhe dele
+  const cidSel = document.getElementById('l-cliente').value;
+  if (cidSel && paginaAtual === 'lancamentos') {
+    // Stay on lancamentos
+  }
 }
 async function deletarLanc(id){if(!confirm('Remover?'))return;await deletarDoc('lancamentos',id);}
 
@@ -582,3 +596,96 @@ window.editarFicha       = editarFicha;
 window.closeEditModal    = closeEditModal;
 window.salvarEdicaoFicha = salvarEdicaoFicha;
 window.updateEditPreview = updateEditPreview;
+
+/* ===== COMPARTILHAR NOTA ===== */
+function imprimirNota() {
+  const cid = clienteDetalheId;
+  if (!cid) return;
+  const c = db.clientes.find(x => x.id == cid);
+  if (!c) return;
+
+  const fichas = db.lancamentos.filter(l => l.cid == cid).sort((a,b) => a.id.localeCompare(b.id));
+  const totalFat = totalLanc(cid);
+  const hoje = new Date().toLocaleDateString('pt-BR');
+
+  let linhasTabela = '';
+  fichas.forEach(l => {
+    linhasTabela += `<tr>
+      <td>${l.peca}</td>
+      <td>${l.lavado}</td>
+      <td>${l.valor.toFixed(2).replace('.',',')}</td>
+      <td>${(l.qtd*l.valor).toFixed(2).replace('.',',')}</td>
+      <td>${formatDate(l.data)}</td>
+    </tr>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+  <style>
+    @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
+    @page {
+      @top-left{content:''}@top-center{content:''}@top-right{content:''}
+      @bottom-left{content:''}@bottom-center{content:''}@bottom-right{content:''}
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; }
+    .logo-wrap { text-align: center; margin-bottom: 18px; padding-top: 4px; }
+    .logo-wrap img { height: 70px; width: auto; }
+    .info { margin-bottom: 14px; font-size: 11pt; line-height: 1.8; }
+    .info strong { font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10pt; }
+    th { background: #f0f0f0; border: 1px solid #ccc; padding: 7px 8px; text-align: left; font-weight: bold; }
+    td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: top; }
+    tr:nth-child(even) td { background: #fafafa; }
+    .total-section { text-align: right; font-size: 12pt; font-weight: bold; margin-top: 4px; }
+    .total-line { display: flex; justify-content: flex-end; gap: 20px; padding-top: 6px; border-top: 2px solid #000; margin-top: 6px; }
+    .assinatura { margin-top: 40px; font-size: 10pt; color: #555; }
+  </style>
+</head>
+<body>
+  <div class="logo-wrap">
+    <img src="${window.location.origin}${window.location.pathname.replace('index.html','')}img/logo.jpg" alt="Lavanderia Emanoel">
+  </div>
+  <div class="info">
+    <div><strong>Contato:</strong> (83) 981267379 / (83) 981053327</div>
+    <div><strong>Cliente:</strong> ${c.nome}</div>
+    <div><strong>Data:</strong> ${hoje}</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Quantidade:</th>
+        <th>Lavado:</th>
+        <th>Valor:</th>
+        <th>Total:</th>
+        <th>Data:</th>
+      </tr>
+    </thead>
+    <tbody>${linhasTabela}</tbody>
+  </table>
+  <div class="total-section">
+    <div class="total-line">
+      <span>TOTAL R$:</span>
+      <span>${totalFat.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+    </div>
+  </div>
+  <div class="assinatura">Assinatura do Cliente: _______________________</div>
+</body>
+</html>`;
+
+  // Tenta usar Web Share API (compartilhar como PDF) ou abre para salvar
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.onload = () => {
+    setTimeout(() => {
+      win.focus();
+      win.print(); // No mobile isso abre "Salvar como PDF" e depois compartilhar
+    }, 400);
+  };
+}
+
+window.imprimirNota = imprimirNota;
