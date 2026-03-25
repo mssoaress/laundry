@@ -619,73 +619,58 @@ function imprimirNota() {
     </tr>`;
   });
 
+  const logoUrl = window.location.origin + window.location.pathname.replace(/\/[^\/]*$/, '') + '/img/logo.jpg';
+
   const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <title></title>
-  <style>
-    @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
-    @page {
-      @top-left{content:''}@top-center{content:''}@top-right{content:''}
-      @bottom-left{content:''}@bottom-center{content:''}@bottom-right{content:''}
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: Arial, sans-serif; font-size: 11pt; color: #000; }
-    .logo-wrap { text-align: center; margin-bottom: 18px; padding-top: 4px; }
-    .logo-wrap img { height: 70px; width: auto; }
-    .info { margin-bottom: 14px; font-size: 11pt; line-height: 1.8; }
-    .info strong { font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 10pt; }
-    th { background: #f0f0f0; border: 1px solid #ccc; padding: 7px 8px; text-align: left; font-weight: bold; }
-    td { border: 1px solid #ccc; padding: 6px 8px; vertical-align: top; }
-    tr:nth-child(even) td { background: #fafafa; }
-    .total-section { text-align: right; font-size: 12pt; font-weight: bold; margin-top: 4px; }
-    .total-line { display: flex; justify-content: flex-end; gap: 20px; padding-top: 6px; border-top: 2px solid #000; margin-top: 6px; }
-    .assinatura { margin-top: 40px; font-size: 10pt; color: #555; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nota ${c.nome}</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;font-size:11pt;color:#000;padding:12mm 15mm}
+.logo-wrap{text-align:center;margin-bottom:16px}
+.logo-wrap img{height:65px;width:auto}
+.info{margin-bottom:14px;line-height:1.8}
+.info strong{font-weight:bold}
+table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:10pt}
+th{background:#f0f0f0;border:1px solid #ccc;padding:7px 8px;text-align:left;font-weight:bold}
+td{border:1px solid #ccc;padding:6px 8px;vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+.total-wrap{text-align:right;margin-top:6px}
+.total-line{display:inline-flex;gap:20px;border-top:2px solid #000;padding-top:6px;font-size:12pt;font-weight:bold}
+.assin{margin-top:36px;font-size:10pt;color:#555}
+.btn-compartilhar{display:block;width:100%;margin-top:20px;padding:14px;background:#1d4ed8;color:#fff;border:none;border-radius:10px;font-size:15pt;font-weight:700;cursor:pointer;font-family:Arial,sans-serif}
+@media print{.btn-compartilhar{display:none}body{padding:12mm 15mm}}
+</style>
 </head>
 <body>
-  <div class="logo-wrap">
-    <img src="${window.location.origin}${window.location.pathname.replace('index.html','')}img/logo.jpg" alt="Lavanderia Emanoel">
+<div class="logo-wrap"><img src="${logoUrl}" onerror="this.style.display='none'"></div>
+<div class="info">
+  <div><strong>Contato:</strong> (83) 981267379 / (83) 981053327</div>
+  <div><strong>Cliente:</strong> ${c.nome}</div>
+  <div><strong>Data:</strong> ${hoje}</div>
+</div>
+<table>
+  <thead><tr><th>Quantidade:</th><th>Lavado:</th><th>Valor:</th><th>Total:</th><th>Data:</th></tr></thead>
+  <tbody>${linhasTabela}</tbody>
+</table>
+<div class="total-wrap">
+  <div class="total-line">
+    <span>TOTAL R$:</span>
+    <span>${totalFat.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
   </div>
-  <div class="info">
-    <div><strong>Contato:</strong> (83) 981267379 / (83) 981053327</div>
-    <div><strong>Cliente:</strong> ${c.nome}</div>
-    <div><strong>Data:</strong> ${hoje}</div>
-  </div>
-  <table>
-    <thead>
-      <tr>
-        <th>Quantidade:</th>
-        <th>Lavado:</th>
-        <th>Valor:</th>
-        <th>Total:</th>
-        <th>Data:</th>
-      </tr>
-    </thead>
-    <tbody>${linhasTabela}</tbody>
-  </table>
-  <div class="total-section">
-    <div class="total-line">
-      <span>TOTAL R$:</span>
-      <span>${totalFat.toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
-    </div>
-  </div>
-  <div class="assinatura">Assinatura do Cliente: _______________________</div>
+</div>
+<div class="assin">Assinatura do Cliente: _______________________</div>
+<button class="btn-compartilhar" onclick="window.print()">Salvar / Compartilhar PDF</button>
 </body>
 </html>`;
 
-  // Tenta usar Web Share API (compartilhar como PDF) ou abre para salvar
-  const win = window.open('', '_blank');
-  win.document.write(html);
-  win.document.close();
-  win.onload = () => {
-    setTimeout(() => {
-      win.focus();
-      win.print(); // No mobile isso abre "Salvar como PDF" e depois compartilhar
-    }, 400);
-  };
+  // Usar blob URL — funciona no Safari iOS
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  window.location.href = url;
 }
 
 window.imprimirNota = imprimirNota;
