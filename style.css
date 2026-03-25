@@ -104,7 +104,7 @@ tr:last-child td{border-bottom:none}
 .form-card-title{font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;color:var(--blue-900);margin-bottom:14px}
 .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
 .form-group label{font-size:0.67rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:0.5px}
-.form-group input,.form-group select{padding:11px 13px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);background:var(--surface-2);color:var(--text-1);font-size:0.9rem;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none}
+.form-group input,.form-group select{padding:11px 13px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);background:var(--surface-2);color:var(--text-1);font-size:16px;font-family:'Plus Jakarta Sans',sans-serif;transition:border-color 0.15s,box-shadow 0.15s;-webkit-appearance:none;appearance:none}
 .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(59,130,246,0.1);background:#fff}
 .form-group input:disabled{background:var(--surface-3);color:var(--text-3)}
 .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -114,7 +114,7 @@ tr:last-child td{border-bottom:none}
 
 /* FILTER BAR */
 .filter-bar{display:flex;gap:7px;margin-bottom:10px}
-.filter-bar select{flex:1;padding:9px 11px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);background:var(--surface);color:var(--text-1);font-size:0.82rem;font-family:'Plus Jakarta Sans',sans-serif;-webkit-appearance:none}
+.filter-bar select{flex:1;padding:9px 11px;border:1.5px solid var(--border-s);border-radius:var(--r-sm);background:var(--surface);color:var(--text-1);font-size:16px;font-family:'Plus Jakarta Sans',sans-serif;-webkit-appearance:none}
 
 /* BUTTONS */
 .btn-primary{flex:1;padding:13px;border:none;border-radius:var(--r-sm);background:linear-gradient(135deg,var(--blue-600),var(--blue-800));color:#fff;font-size:0.88rem;font-weight:700;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;box-shadow:0 4px 12px rgba(37,99,235,0.3);transition:transform 0.1s;letter-spacing:0.2px}
@@ -213,3 +213,7 @@ input[type="checkbox"]{width:15px;height:15px;accent-color:var(--blue-600);curso
 /* ===== EDIT BUTTON ===== */
 .btn-edit-sm{padding:5px 9px;border:1px solid rgba(59,130,246,0.3);border-radius:8px;background:var(--blue-50);color:var(--blue-700);font-size:0.72rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif}
 .btn-edit-sm:active{background:var(--blue-100)}
+
+/* ===== PRINT BUTTON ===== */
+.btn-print{width:34px;height:34px;border:none;border-radius:50%;background:rgba(255,255,255,0.15);color:#fff;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.15s}
+.btn-print:active{background:rgba(255,255,255,0.3)}
