@@ -77,7 +77,10 @@
     <div id="cliente-detalhe" class="page">
       <div class="page-header">
         <button class="btn-back" onclick="showPage('clientes')">← Voltar</button>
-        <button class="btn-icon" onclick="abrirModalDetalhe()">+ Pgto</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn-print" onclick="imprimirNota()" title="Compartilhar nota">📤</button>
+          <button class="btn-icon" onclick="abrirModalDetalhe()">+ Pgto</button>
+        </div>
       </div>
       <div id="detalhe-header" class="detalhe-header"></div>
       <div id="detalhe-resumo" class="detalhe-resumo"></div>
@@ -282,6 +285,34 @@
       </div>
     </div>
   </div>
+
+  <!-- ÁREA DE IMPRESSÃO -->
+  <div id="print-area" style="display:none">
+    <div id="print-content"></div>
+  </div>
+
+  <style>
+    @media print {
+      body > *:not(#print-area) { display: none !important; }
+      #print-area {
+        display: block !important;
+        position: fixed;
+        top: 0; left: 0;
+        width: 58mm;
+        padding: 3mm;
+        background: white;
+        font-family: 'Courier New', monospace;
+        font-size: 9pt;
+        color: #000;
+      }
+      #print-content { width: 100%; }
+      .p-center { text-align: center; }
+      .p-bold { font-weight: bold; }
+      .p-line { border-top: 1px dashed #000; margin: 3px 0; }
+      .p-row { display: flex; justify-content: space-between; font-size: 8pt; }
+      .p-title { text-align: center; font-size: 11pt; font-weight: bold; margin: 4px 0; }
+    }
+  </style>
   <script type="module" src="app.js"></script>
 </body>
 </html>
