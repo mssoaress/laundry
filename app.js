@@ -387,6 +387,12 @@ function inicializarApp(){
   const rMes=document.getElementById('r-mes');if(rMes)rMes.value=mes;
   const lData=document.getElementById('l-data');if(lData)lData.value=new Date().toISOString().split('T')[0];
   populateLavadoSelect();populateSelects();renderDashboard();
+  // Show sidebar on desktop
+  const sidebar=document.getElementById('sidebar');
+  if(sidebar && window.innerWidth>=768) sidebar.style.display='flex';
+  window.addEventListener('resize',()=>{
+    if(sidebar) sidebar.style.display=window.innerWidth>=768?'flex':'none';
+  });
 }
 
 window.showPage=showPage;window.toggleForm=toggleForm;window.salvarCliente=salvarCliente;
