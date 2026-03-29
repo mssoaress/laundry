@@ -387,12 +387,29 @@ function inicializarApp(){
   const rMes=document.getElementById('r-mes');if(rMes)rMes.value=mes;
   const lData=document.getElementById('l-data');if(lData)lData.value=new Date().toISOString().split('T')[0];
   populateLavadoSelect();populateSelects();renderDashboard();
+
   // Show sidebar on desktop
   const sidebar=document.getElementById('sidebar');
   if(sidebar && window.innerWidth>=768) sidebar.style.display='flex';
   window.addEventListener('resize',()=>{
     if(sidebar) sidebar.style.display=window.innerWidth>=768?'flex':'none';
+    fixMobilePadding();
   });
+
+  // Fix mobile padding dynamically
+  fixMobilePadding();
+}
+
+function fixMobilePadding(){
+  if(window.innerWidth>=768) return;
+  const header=document.querySelector('.header');
+  const main=document.querySelector('.main');
+  const nav=document.querySelector('.bottom-nav');
+  if(!header||!main) return;
+  const headerH=header.getBoundingClientRect().height;
+  const navH=nav?nav.getBoundingClientRect().height:70;
+  main.style.paddingTop=(headerH+16)+'px';
+  main.style.paddingBottom=(navH+16)+'px';
 }
 
 window.showPage=showPage;window.toggleForm=toggleForm;window.salvarCliente=salvarCliente;
