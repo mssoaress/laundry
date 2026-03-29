@@ -438,10 +438,14 @@ function renderDetalheCliente(cid) {
   // Header
   document.getElementById('detalhe-header').innerHTML = `
     <div class="detalhe-avatar">${initials(c.nome)}</div>
-    <div>
+    <div style="flex:1;min-width:0">
       <div class="detalhe-nome">${c.nome}</div>
       <div class="detalhe-tel">${c.tel || 'Sem telefone'}</div>
       <div style="font-size:0.72rem;color:rgba(255,255,255,0.6);margin-top:2px">${fichas.length} ficha${fichas.length!==1?'s':''} · ${fmtN(totalPcs)} peças</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;flex-shrink:0">
+      <button onclick="imprimirNota()" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;color:#fff;font-size:0.78rem;font-weight:700;padding:8px 12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap">📤 Nota</button>
+      <button onclick="abrirModalDetalhe()" style="background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.4);border-radius:10px;color:#fff;font-size:0.78rem;font-weight:700;padding:8px 12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap">+ Pgto</button>
     </div>`;
 
   // Resumo
@@ -617,7 +621,7 @@ function imprimirNota() {
   let linhasTabela = '';
   fichas.forEach(l => {
     linhasTabela += `<tr>
-      <td>${l.peca}</td>
+      <td>${fmtN(l.qtd)} ${l.peca}</td>
       <td>${l.lavado}</td>
       <td>${l.valor.toFixed(2).replace('.',',')}</td>
       <td>${(l.qtd*l.valor).toFixed(2).replace('.',',')}</td>
