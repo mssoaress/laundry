@@ -5,36 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#1e3a8a">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#1565c0">
   <title>Lavanderia Emanoel</title>
   <link rel="stylesheet" href="style.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <!-- SIDEBAR (desktop) -->
-  <aside class="sidebar" id="sidebar" style="display:none">
-    <div class="sidebar-logo">
-      <img src="img/logo.jpg" alt="Lavanderia Emanoel">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="sidebar-logo-img">
     </div>
     <nav class="sidebar-nav">
-      <button class="sidebar-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="sidebar-icon">⊞</span>Dashboard</button>
-      <button class="sidebar-item" onclick="showPage('clientes')" data-page="clientes"><span class="sidebar-icon">👤</span>Clientes</button>
-      <button class="sidebar-item" onclick="showPage('lancamentos')" data-page="lancamentos"><span class="sidebar-icon">🗂️</span>Fichas</button>
-      <button class="sidebar-item" onclick="showPage('pendentes')" data-page="pendentes"><span class="sidebar-icon">⚠</span>Pendentes</button>
-      <button class="sidebar-item" onclick="showPage('relatorio')" data-page="relatorio"><span class="sidebar-icon">📊</span>Relatório</button>
-      <button class="sidebar-item" onclick="showPage('lavados')" data-page="lavados"><span class="sidebar-icon">🧺</span>Lavados</button>
+      <button class="sidebar-item active" onclick="showPage('dashboard')" data-page="dashboard">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Painel
+      </button>
+      <button class="sidebar-item" onclick="showPage('clientes')" data-page="clientes">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+        Clientes
+      </button>
+      <button class="sidebar-item" onclick="showPage('lancamentos')" data-page="lancamentos">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        Fichas
+      </button>
+      <button class="sidebar-item" onclick="showPage('pendentes')" data-page="pendentes">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Pendentes
+      </button>
+      <button class="sidebar-item" onclick="showPage('relatorio')" data-page="relatorio">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Relatorio
+      </button>
+      <button class="sidebar-item" onclick="showPage('lavados')" data-page="lavados">
+        <!-- Icone maquina de lavar -->
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="2"/>
+          <circle cx="12" cy="13" r="4"/>
+          <line x1="6" y1="6" x2="6.01" y2="6"/>
+          <line x1="10" y1="6" x2="14" y2="6"/>
+        </svg>
+        Servicos
+      </button>
     </nav>
     <div class="sidebar-footer">
-      <div style="font-weight:700;color:rgba(255,255,255,0.7);margin-bottom:2px">Lavanderia Emanoel</div>
-      <div>(83) 981267379 / 981053327</div>
+      <span>(83) 981267379 / 981053327</span>
     </div>
   </aside>
 
   <!-- LOADING -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-inner">
-      <img src="img/logo.jpg" alt="Logo" class="loading-logo-img">
+      <img src="img/logo-nova-lavanderia.png" alt="Logo" class="loading-logo-img">
       <div class="loading-spinner"></div>
       <p id="loading-msg">Conectando...</p>
     </div>
@@ -43,7 +67,7 @@
   <!-- HEADER (mobile) -->
   <header class="header">
     <div class="header-content">
-      <img src="img/logo.jpg" alt="Lavanderia Emanoel" class="header-logo">
+      <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="header-logo">
     </div>
   </header>
 
@@ -53,8 +77,10 @@
     <!-- DASHBOARD -->
     <div id="dashboard" class="page active">
       <div class="page-header">
-        <h2 class="page-title">Dashboard</h2>
-        <span class="page-date" id="dash-date"></span>
+        <div>
+          <h2 class="page-title">Painel</h2>
+          <span class="page-subtitle" id="dash-date"></span>
+        </div>
       </div>
       <div class="metrics" id="metrics-cards"></div>
       <div class="dash-grid">
@@ -63,18 +89,18 @@
           <div class="card">
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Cliente</th><th>Total</th><th>Aberto</th><th>Status</th></tr></thead>
+                <thead><tr><th>Cliente</th><th>Total</th><th>Em aberto</th><th>Status</th></tr></thead>
                 <tbody id="tbl-aberto"></tbody>
               </table>
             </div>
           </div>
         </div>
         <div class="dash-col">
-          <div class="section-label">Últimas fichas</div>
+          <div class="section-label">Ultimas fichas</div>
           <div class="card">
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Data</th><th>Cliente</th><th>Peça</th><th>Qtd</th><th>Total</th></tr></thead>
+                <thead><tr><th>Data</th><th>Cliente</th><th>Peca</th><th>Qtd</th><th>Total</th></tr></thead>
                 <tbody id="tbl-ultimos"></tbody>
               </table>
             </div>
@@ -86,13 +112,16 @@
     <!-- CLIENTES -->
     <div id="clientes" class="page">
       <div class="page-header">
-        <h2 class="page-title">Clientes</h2>
-        <button class="btn-icon" onclick="toggleForm('form-cliente')">＋</button>
+        <div><h2 class="page-title">Clientes</h2></div>
+        <button class="btn-add" onclick="toggleForm('form-cliente')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo cliente
+        </button>
       </div>
       <div class="form-card" id="form-cliente" style="display:none">
         <div class="form-card-title">Novo cliente</div>
-        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome completo"></div>
-        <div class="form-group"><label>Telefone</label><input id="c-tel" placeholder="(83) 00000-0000"></div>
+        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome completo" autocomplete="off" autocorrect="off"></div>
+        <div class="form-group"><label>Telefone</label><input id="c-tel" placeholder="(83) 00000-0000" type="tel" autocomplete="off"></div>
         <div class="form-actions">
           <button class="btn-primary" onclick="salvarCliente()">Salvar</button>
           <button class="btn-ghost" onclick="toggleForm('form-cliente')">Cancelar</button>
@@ -104,7 +133,10 @@
     <!-- CLIENTE DETALHE -->
     <div id="cliente-detalhe" class="page">
       <div class="page-header">
-        <button class="btn-back" onclick="showPage('clientes')">← Voltar</button>
+        <button class="btn-back" onclick="showPage('clientes')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+          Voltar
+        </button>
       </div>
       <div id="detalhe-header" class="detalhe-header"></div>
       <div id="detalhe-resumo" class="detalhe-resumo"></div>
@@ -119,18 +151,21 @@
     <!-- FICHAS -->
     <div id="lancamentos" class="page">
       <div class="page-header">
-        <h2 class="page-title">Fichas</h2>
-        <button class="btn-icon" onclick="toggleForm('form-lanc')">＋</button>
+        <div><h2 class="page-title">Fichas</h2></div>
+        <button class="btn-add" onclick="toggleForm('form-lanc')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nova ficha
+        </button>
       </div>
       <div class="form-card" id="form-lanc" style="display:none">
         <div class="form-card-title">Nova ficha</div>
         <div class="form-group"><label>Cliente</label><select id="l-cliente"></select></div>
         <div class="form-group"><label>Data</label><input type="date" id="l-data"></div>
-        <div class="form-group"><label>Peça</label><input id="l-peca" placeholder="Ex: Shorts, Calças..."></div>
-        <div class="form-group"><label>Lavado</label><select id="l-lavado"></select></div>
+        <div class="form-group"><label>Peca</label><input id="l-peca" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
+        <div class="form-group"><label>Servico</label><select id="l-lavado"></select></div>
         <div class="form-row-2">
-          <div class="form-group"><label>Quantidade</label><input type="number" id="l-qtd" placeholder="0" oninput="updatePreview()"></div>
-          <div class="form-group"><label>Valor un. (R$)</label><input type="number" id="l-valor" placeholder="0,00" step="0.01" oninput="updatePreview()"></div>
+          <div class="form-group"><label>Quantidade</label><input type="number" id="l-qtd" placeholder="0" inputmode="numeric" oninput="updatePreview()"></div>
+          <div class="form-group"><label>Valor unit. (R$)</label><input type="number" id="l-valor" placeholder="0,00" step="0.01" inputmode="decimal" oninput="updatePreview()"></div>
         </div>
         <div id="l-preview" class="preview-total"></div>
         <div class="form-actions">
@@ -141,9 +176,9 @@
       <div class="filter-bar">
         <select id="f-cliente" onchange="renderLancamentos()"></select>
         <select id="f-mes" onchange="renderLancamentos()">
-          <option value="">Todos meses</option>
+          <option value="">Todos os meses</option>
           <option value="01">Janeiro</option><option value="02">Fevereiro</option>
-          <option value="03">Março</option><option value="04">Abril</option>
+          <option value="03">Marco</option><option value="04">Abril</option>
           <option value="05">Maio</option><option value="06">Junho</option>
           <option value="07">Julho</option><option value="08">Agosto</option>
           <option value="09">Setembro</option><option value="10">Outubro</option>
@@ -153,22 +188,37 @@
       <div id="lanc-list"></div>
     </div>
 
-    <!-- RELATÓRIO -->
+    <!-- RELATORIO -->
     <div id="relatorio" class="page">
       <div class="page-header">
-        <h2 class="page-title">Relatório</h2>
-        <select id="r-mes" class="select-inline" onchange="renderRelatorio()">
-          <option value="01">Jan</option><option value="02">Fev</option>
-          <option value="03">Mar</option><option value="04">Abr</option>
-          <option value="05">Mai</option><option value="06">Jun</option>
-          <option value="07">Jul</option><option value="08">Ago</option>
-          <option value="09">Set</option><option value="10">Out</option>
-          <option value="11">Nov</option><option value="12">Dez</option>
-        </select>
+        <div><h2 class="page-title">Relatorio</h2></div>
+      </div>
+      <!-- Filtros de periodo -->
+      <div class="relatorio-filtros">
+        <div class="filtro-tabs">
+          <button class="filtro-tab active" data-periodo="mensal" onclick="setPeriodo('mensal')">Mensal</button>
+          <button class="filtro-tab" data-periodo="semanal" onclick="setPeriodo('semanal')">Semanal</button>
+        </div>
+        <div class="filtro-controles" id="controles-mensal">
+          <select id="r-mes" class="select-inline" onchange="renderRelatorio()">
+            <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+            <option value="03">Marco</option><option value="04">Abril</option>
+            <option value="05">Maio</option><option value="06">Junho</option>
+            <option value="07">Julho</option><option value="08">Agosto</option>
+            <option value="09">Setembro</option><option value="10">Outubro</option>
+            <option value="11">Novembro</option><option value="12">Dezembro</option>
+          </select>
+          <select id="r-ano" class="select-inline" onchange="renderRelatorio()"></select>
+        </div>
+        <div class="filtro-controles" id="controles-semanal" style="display:none">
+          <input type="date" id="r-semana-inicio" class="select-inline" onchange="renderRelatorio()">
+          <span class="filtro-sep">ate</span>
+          <input type="date" id="r-semana-fim" class="select-inline" onchange="renderRelatorio()">
+        </div>
       </div>
       <div class="metrics" id="r-metrics"></div>
-      <div class="section-label">Peças por cliente</div>
-      <div class="card"><div id="r-barras"></div></div>
+      <div class="section-label">Pecas por cliente</div>
+      <div class="card"><div id="r-barras" style="padding:4px 0"></div></div>
       <div class="section-label">Detalhamento</div>
       <div class="card">
         <div class="table-wrap">
@@ -176,7 +226,7 @@
             <thead>
               <tr>
                 <th><input type="checkbox" id="chk-all" onclick="toggleAllChk()"></th>
-                <th>Cliente</th><th>Peças</th><th>Fat.</th><th>Aberto</th><th></th>
+                <th>Cliente</th><th>Pecas</th><th>Faturamento</th><th>Em aberto</th><th></th>
               </tr>
             </thead>
             <tbody id="tbl-relatorio"></tbody>
@@ -184,7 +234,7 @@
         </div>
         <div id="bulk-actions" class="bulk-bar" style="display:none">
           <span id="bulk-label"></span>
-          <button class="btn-primary btn-sm" onclick="marcarSelecionadosPago()">✓ Marcar pago</button>
+          <button class="btn-primary btn-sm" onclick="marcarSelecionadosPago()">Marcar como pago</button>
           <button class="btn-ghost btn-sm" onclick="desmarcarTodos()">Cancelar</button>
         </div>
       </div>
@@ -193,8 +243,10 @@
     <!-- PENDENTES -->
     <div id="pendentes" class="page">
       <div class="page-header">
-        <h2 class="page-title">Pendentes</h2>
-        <span id="pendentes-total" class="badge-total"></span>
+        <div>
+          <h2 class="page-title">Pendentes</h2>
+          <span class="badge-total" id="pendentes-total"></span>
+        </div>
       </div>
       <div class="metrics" id="pendentes-metrics"></div>
       <div class="card">
@@ -203,7 +255,7 @@
             <thead>
               <tr>
                 <th><input type="checkbox" id="chk-pend-all" onclick="toggleAllPendChk()"></th>
-                <th>Cliente</th><th>Aberto</th><th>Último</th><th></th>
+                <th>Cliente</th><th>Em aberto</th><th>Ultima ficha</th><th></th>
               </tr>
             </thead>
             <tbody id="tbl-pendentes"></tbody>
@@ -211,23 +263,26 @@
         </div>
         <div id="pend-bulk-actions" class="bulk-bar" style="display:none">
           <span id="pend-bulk-label"></span>
-          <button class="btn-primary btn-sm" onclick="marcarPendentesPago()">✓ Quitar</button>
+          <button class="btn-primary btn-sm" onclick="marcarPendentesPago()">Quitar selecionados</button>
           <button class="btn-ghost btn-sm" onclick="desmarcarPendentes()">Cancelar</button>
         </div>
       </div>
     </div>
 
-    <!-- LAVADOS -->
+    <!-- SERVICOS -->
     <div id="lavados" class="page">
       <div class="page-header">
-        <h2 class="page-title">Tipos de Lavado</h2>
-        <button class="btn-icon" onclick="toggleForm('form-lavado')">＋</button>
+        <div><h2 class="page-title">Servicos</h2></div>
+        <button class="btn-add" onclick="toggleForm('form-lavado')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Novo servico
+        </button>
       </div>
       <div class="form-card" id="form-lavado" style="display:none">
-        <div class="form-card-title">Novo lavado</div>
+        <div class="form-card-title">Novo servico</div>
         <div class="form-row-2">
-          <div class="form-group"><label>Nome</label><input id="lv-nome" placeholder="Ex: Stone..."></div>
-          <div class="form-group"><label>Valor padrão (R$)</label><input type="number" id="lv-valor" placeholder="0,00" step="0.01"></div>
+          <div class="form-group"><label>Nome</label><input id="lv-nome" placeholder="Ex: Stone..." autocomplete="off" autocorrect="off"></div>
+          <div class="form-group"><label>Valor padrao (R$)</label><input type="number" id="lv-valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
         </div>
         <div class="form-actions">
           <button class="btn-primary" onclick="salvarLavado()">Salvar</button>
@@ -237,7 +292,7 @@
       <div class="card">
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Lavado</th><th>Valor</th><th>Usos</th><th></th></tr></thead>
+            <thead><tr><th>Servico</th><th>Valor</th><th>Usos</th><th></th></tr></thead>
             <tbody id="tbl-lavados"></tbody>
           </table>
         </div>
@@ -248,12 +303,26 @@
 
   <!-- BOTTOM NAV (mobile) -->
   <nav class="bottom-nav">
-    <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="nav-icon">⊞</span><span class="nav-label">Início</span></button>
-    <button class="nav-item" onclick="showPage('clientes')" data-page="clientes"><span class="nav-icon">👤</span><span class="nav-label">Clientes</span></button>
-    <button class="nav-item" onclick="showPage('lancamentos')" data-page="lancamentos"><span class="nav-icon">🗂️</span><span class="nav-label">Fichas</span></button>
-    <button class="nav-item" onclick="showPage('pendentes')" data-page="pendentes"><span class="nav-icon">⚠</span><span class="nav-label">Pendentes</span></button>
-    <button class="nav-item" onclick="showPage('relatorio')" data-page="relatorio"><span class="nav-icon">📊</span><span class="nav-label">Relatório</span></button>
-    <button class="nav-item" onclick="showPage('lavados')" data-page="lavados"><span class="nav-icon">🧺</span><span class="nav-label">Lavados</span></button>
+    <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="nav-label">Painel</span>
+    </button>
+    <button class="nav-item" onclick="showPage('clientes')" data-page="clientes">
+      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+      <span class="nav-label">Clientes</span>
+    </button>
+    <button class="nav-item" onclick="showPage('lancamentos')" data-page="lancamentos">
+      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="nav-label">Fichas</span>
+    </button>
+    <button class="nav-item" onclick="showPage('pendentes')" data-page="pendentes">
+      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span class="nav-label">Pendentes</span>
+    </button>
+    <button class="nav-item" onclick="showPage('relatorio')" data-page="relatorio">
+      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span class="nav-label">Relatorio</span>
+    </button>
   </nav>
 
   <!-- MODAL PAGAMENTO -->
@@ -262,8 +331,8 @@
       <div class="modal-handle"></div>
       <div class="modal-title">Registrar pagamento</div>
       <div class="form-group"><label>Cliente</label><input id="m-cliente" disabled></div>
-      <div class="form-group"><label>Em aberto</label><input id="m-aberto" disabled class="input-danger"></div>
-      <div class="form-group"><label>Valor pago (R$)</label><input type="number" id="m-valor" placeholder="0,00" step="0.01"></div>
+      <div class="form-group"><label>Valor em aberto</label><input id="m-aberto" disabled class="input-danger"></div>
+      <div class="form-group"><label>Valor pago (R$)</label><input type="number" id="m-valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
       <div class="form-actions">
         <button class="btn-primary" onclick="confirmarPagamento()">Confirmar</button>
         <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
@@ -276,12 +345,12 @@
     <div class="modal" onclick="event.stopPropagation()">
       <div class="modal-handle"></div>
       <div class="modal-title">Editar ficha</div>
-      <div class="form-group"><label>Peça</label><input id="e-peca" placeholder="Ex: Shorts, Calças..."></div>
-      <div class="form-group"><label>Lavado</label><select id="e-lavado"></select></div>
+      <div class="form-group"><label>Peca</label><input id="e-peca" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
+      <div class="form-group"><label>Servico</label><select id="e-lavado"></select></div>
       <div class="form-group"><label>Data</label><input type="date" id="e-data"></div>
       <div class="form-row-2">
-        <div class="form-group"><label>Quantidade</label><input type="number" id="e-qtd" placeholder="0" oninput="updateEditPreview()"></div>
-        <div class="form-group"><label>Valor un. (R$)</label><input type="number" id="e-valor" placeholder="0,00" step="0.01" oninput="updateEditPreview()"></div>
+        <div class="form-group"><label>Quantidade</label><input type="number" id="e-qtd" placeholder="0" inputmode="numeric" oninput="updateEditPreview()"></div>
+        <div class="form-group"><label>Valor unit. (R$)</label><input type="number" id="e-valor" placeholder="0,00" step="0.01" inputmode="decimal" oninput="updateEditPreview()"></div>
       </div>
       <div id="e-preview" class="preview-total"></div>
       <div class="form-actions">
@@ -291,7 +360,6 @@
     </div>
   </div>
 
-  <!-- ÁREA DE IMPRESSÃO -->
   <div id="print-area" style="display:none"><div id="print-content"></div></div>
   <style>
     @media print {
