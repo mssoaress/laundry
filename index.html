@@ -13,48 +13,6 @@
 </head>
 <body>
 
-  <!-- SIDEBAR (desktop) -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="sidebar-logo-img">
-    </div>
-    <nav class="sidebar-nav">
-      <button class="sidebar-item active" onclick="showPage('dashboard')" data-page="dashboard">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        Painel
-      </button>
-      <button class="sidebar-item" onclick="showPage('clientes')" data-page="clientes">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
-        Clientes
-      </button>
-      <button class="sidebar-item" onclick="showPage('lancamentos')" data-page="lancamentos">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-        Fichas
-      </button>
-      <button class="sidebar-item" onclick="showPage('pendentes')" data-page="pendentes">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Pendentes
-      </button>
-      <button class="sidebar-item" onclick="showPage('relatorio')" data-page="relatorio">
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-        Relatorio
-      </button>
-      <button class="sidebar-item" onclick="showPage('lavados')" data-page="lavados">
-        <!-- Icone maquina de lavar -->
-        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="2" width="20" height="20" rx="2"/>
-          <circle cx="12" cy="13" r="4"/>
-          <line x1="6" y1="6" x2="6.01" y2="6"/>
-          <line x1="10" y1="6" x2="14" y2="6"/>
-        </svg>
-        Servicos
-      </button>
-    </nav>
-    <div class="sidebar-footer">
-      <span>(83) 981267379 / 981053327</span>
-    </div>
-  </aside>
-
   <!-- LOADING -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-inner">
@@ -64,143 +22,189 @@
     </div>
   </div>
 
-  <!-- HEADER (mobile) -->
-  <header class="header">
-    <div class="header-content">
-      <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="header-logo">
-    </div>
-  </header>
-
-  <!-- MAIN -->
-  <main class="main">
-
-    <!-- DASHBOARD -->
-    <div id="dashboard" class="page active">
-      <div class="page-header">
-        <div>
-          <h2 class="page-title">Painel</h2>
-          <span class="page-subtitle" id="dash-date"></span>
+  <!-- TELA DE LOGIN -->
+  <div id="login-screen" class="login-screen" style="display:none">
+    <div class="login-card">
+      <div class="login-logo-wrap">
+        <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="login-logo">
+      </div>
+      <h1 class="login-title">Acesso ao sistema</h1>
+      <p class="login-subtitle">Lavanderia Emanoel</p>
+      <div class="form-group">
+        <label>Usuario</label>
+        <input id="login-user" type="text" placeholder="Digite seu usuario" autocomplete="username" autocorrect="off" autocapitalize="none">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <div class="input-eye-wrap">
+          <input id="login-pass" type="password" placeholder="Digite sua senha" autocomplete="current-password">
+          <button class="btn-eye" onclick="toggleSenha()" type="button" tabindex="-1">
+            <svg id="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
         </div>
       </div>
-      <div class="metrics" id="metrics-cards"></div>
-      <div class="dash-grid">
-        <div class="dash-col">
-          <div class="section-label">Saldo em aberto</div>
-          <div class="card">
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Cliente</th><th>Total</th><th>Em aberto</th><th>Status</th></tr></thead>
-                <tbody id="tbl-aberto"></tbody>
-              </table>
+      <div id="login-erro" class="login-erro" style="display:none"></div>
+      <button class="btn-login" onclick="fazerLogin()">Entrar</button>
+    </div>
+  </div>
+
+  <!-- APP (admin) -->
+  <div id="app-admin" style="display:none">
+
+    <!-- SIDEBAR (desktop) -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="sidebar-logo-img">
+      </div>
+      <nav class="sidebar-nav">
+        <button class="sidebar-item active" onclick="showPage('dashboard')" data-page="dashboard">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          Painel
+        </button>
+        <button class="sidebar-item" onclick="showPage('clientes')" data-page="clientes">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+          Clientes
+        </button>
+        <button class="sidebar-item" onclick="showPage('lancamentos')" data-page="lancamentos">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Fichas
+        </button>
+        <button class="sidebar-item" onclick="showPage('pendentes')" data-page="pendentes">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Pendentes
+        </button>
+        <button class="sidebar-item" onclick="showPage('relatorio')" data-page="relatorio">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Relatorio
+        </button>
+        <button class="sidebar-item" onclick="showPage('lavados')" data-page="lavados">
+          <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><circle cx="12" cy="13" r="4"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="10" y1="6" x2="14" y2="6"/></svg>
+          Servicos
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+          <span id="sidebar-username">Admin</span>
+        </div>
+        <button class="btn-sair" onclick="fazerLogout()">Sair</button>
+      </div>
+    </aside>
+
+    <!-- HEADER (mobile) -->
+    <header class="header">
+      <div class="header-content">
+        <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="header-logo">
+        <button class="btn-sair-mobile" onclick="fazerLogout()">Sair</button>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <div id="dashboard" class="page active">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Painel</h2>
+            <span class="page-subtitle" id="dash-date"></span>
+          </div>
+        </div>
+        <div class="metrics" id="metrics-cards"></div>
+        <div class="dash-grid">
+          <div class="dash-col">
+            <div class="section-label">Saldo em aberto</div>
+            <div class="card">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Cliente</th><th>Total</th><th>Em aberto</th><th>Status</th></tr></thead>
+                  <tbody id="tbl-aberto"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="dash-col">
+            <div class="section-label">Ultimas fichas</div>
+            <div class="card">
+              <div class="table-wrap">
+                <table>
+                  <thead><tr><th>Data</th><th>Cliente</th><th>Peca</th><th>Qtd</th><th>Total</th></tr></thead>
+                  <tbody id="tbl-ultimos"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
-        <div class="dash-col">
-          <div class="section-label">Ultimas fichas</div>
-          <div class="card">
-            <div class="table-wrap">
-              <table>
-                <thead><tr><th>Data</th><th>Cliente</th><th>Peca</th><th>Qtd</th><th>Total</th></tr></thead>
-                <tbody id="tbl-ultimos"></tbody>
-              </table>
-            </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div id="clientes" class="page">
+        <div class="page-header">
+          <div><h2 class="page-title">Clientes</h2></div>
+          <button class="btn-add" onclick="toggleForm('form-cliente')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo cliente
+          </button>
+        </div>
+        <div class="form-card" id="form-cliente" style="display:none">
+          <div class="form-card-title">Novo cliente</div>
+          <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome completo" autocomplete="off" autocorrect="off"></div>
+          <div class="form-group"><label>Telefone</label><input id="c-tel" placeholder="(83) 00000-0000" type="tel" autocomplete="off"></div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="salvarCliente()">Salvar</button>
+            <button class="btn-ghost" onclick="toggleForm('form-cliente')">Cancelar</button>
           </div>
         </div>
+        <div id="client-list"></div>
       </div>
-    </div>
 
-    <!-- CLIENTES -->
-    <div id="clientes" class="page">
-      <div class="page-header">
-        <div><h2 class="page-title">Clientes</h2></div>
-        <button class="btn-add" onclick="toggleForm('form-cliente')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Novo cliente
-        </button>
-      </div>
-      <div class="form-card" id="form-cliente" style="display:none">
-        <div class="form-card-title">Novo cliente</div>
-        <div class="form-group"><label>Nome</label><input id="c-nome" placeholder="Nome completo" autocomplete="off" autocorrect="off"></div>
-        <div class="form-group"><label>Telefone</label><input id="c-tel" placeholder="(83) 00000-0000" type="tel" autocomplete="off"></div>
-        <div class="form-actions">
-          <button class="btn-primary" onclick="salvarCliente()">Salvar</button>
-          <button class="btn-ghost" onclick="toggleForm('form-cliente')">Cancelar</button>
+      <!-- CLIENTE DETALHE -->
+      <div id="cliente-detalhe" class="page">
+        <div class="page-header">
+          <button class="btn-back" onclick="showPage('clientes')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
+            Voltar
+          </button>
         </div>
+        <div id="detalhe-header" class="detalhe-header"></div>
+        <div id="detalhe-resumo" class="detalhe-resumo"></div>
+        <div class="section-label">Fichas em aberto</div>
+        <div id="detalhe-fichas-abertas"></div>
+        <div class="section-label">Pagamentos realizados</div>
+        <div id="detalhe-pagamentos"></div>
+        <div class="section-label">Todas as fichas</div>
+        <div id="detalhe-todas-fichas"></div>
       </div>
-      <div id="client-list"></div>
-    </div>
 
-    <!-- CLIENTE DETALHE -->
-    <div id="cliente-detalhe" class="page">
-      <div class="page-header">
-        <button class="btn-back" onclick="showPage('clientes')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><polyline points="15 18 9 12 15 6"/></svg>
-          Voltar
-        </button>
-      </div>
-      <div id="detalhe-header" class="detalhe-header"></div>
-      <div id="detalhe-resumo" class="detalhe-resumo"></div>
-      <div class="section-label">Fichas em aberto</div>
-      <div id="detalhe-fichas-abertas"></div>
-      <div class="section-label">Pagamentos realizados</div>
-      <div id="detalhe-pagamentos"></div>
-      <div class="section-label">Todas as fichas</div>
-      <div id="detalhe-todas-fichas"></div>
-    </div>
-
-    <!-- FICHAS -->
-    <div id="lancamentos" class="page">
-      <div class="page-header">
-        <div><h2 class="page-title">Fichas</h2></div>
-        <button class="btn-add" onclick="toggleForm('form-lanc')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nova ficha
-        </button>
-      </div>
-      <div class="form-card" id="form-lanc" style="display:none">
-        <div class="form-card-title">Nova ficha</div>
-        <div class="form-group"><label>Cliente</label><select id="l-cliente"></select></div>
-        <div class="form-group"><label>Data</label><input type="date" id="l-data"></div>
-        <div class="form-group"><label>Peca</label><input id="l-peca" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
-        <div class="form-group"><label>Servico</label><select id="l-lavado"></select></div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Quantidade</label><input type="number" id="l-qtd" placeholder="0" inputmode="numeric" oninput="updatePreview()"></div>
-          <div class="form-group"><label>Valor unit. (R$)</label><input type="number" id="l-valor" placeholder="0,00" step="0.01" inputmode="decimal" oninput="updatePreview()"></div>
+      <!-- FICHAS -->
+      <div id="lancamentos" class="page">
+        <div class="page-header">
+          <div><h2 class="page-title">Fichas</h2></div>
+          <button class="btn-add" onclick="toggleForm('form-lanc')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova ficha
+          </button>
         </div>
-        <div id="l-preview" class="preview-total"></div>
-        <div class="form-actions">
-          <button class="btn-primary" onclick="salvarLancamento()">Salvar ficha</button>
-          <button class="btn-ghost" onclick="toggleForm('form-lanc')">Cancelar</button>
+        <div class="form-card" id="form-lanc" style="display:none">
+          <div class="form-card-title">Nova ficha</div>
+          <div class="form-group"><label>Cliente</label><select id="l-cliente"></select></div>
+          <div class="form-group"><label>Data</label><input type="date" id="l-data"></div>
+          <div class="form-group"><label>Peca</label><input id="l-peca" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
+          <div class="form-group"><label>Servico</label><select id="l-lavado"></select></div>
+          <div class="form-row-2">
+            <div class="form-group"><label>Quantidade</label><input type="number" id="l-qtd" placeholder="0" inputmode="numeric" oninput="updatePreview()"></div>
+            <div class="form-group"><label>Valor unit. (R$)</label><input type="number" id="l-valor" placeholder="0,00" step="0.01" inputmode="decimal" oninput="updatePreview()"></div>
+          </div>
+          <div id="l-preview" class="preview-total"></div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="salvarLancamento()">Salvar ficha</button>
+            <button class="btn-ghost" onclick="toggleForm('form-lanc')">Cancelar</button>
+          </div>
         </div>
-      </div>
-      <div class="filter-bar">
-        <select id="f-cliente" onchange="renderLancamentos()"></select>
-        <select id="f-mes" onchange="renderLancamentos()">
-          <option value="">Todos os meses</option>
-          <option value="01">Janeiro</option><option value="02">Fevereiro</option>
-          <option value="03">Marco</option><option value="04">Abril</option>
-          <option value="05">Maio</option><option value="06">Junho</option>
-          <option value="07">Julho</option><option value="08">Agosto</option>
-          <option value="09">Setembro</option><option value="10">Outubro</option>
-          <option value="11">Novembro</option><option value="12">Dezembro</option>
-        </select>
-      </div>
-      <div id="lanc-list"></div>
-    </div>
-
-    <!-- RELATORIO -->
-    <div id="relatorio" class="page">
-      <div class="page-header">
-        <div><h2 class="page-title">Relatorio</h2></div>
-      </div>
-      <!-- Filtros de periodo -->
-      <div class="relatorio-filtros">
-        <div class="filtro-tabs">
-          <button class="filtro-tab active" data-periodo="mensal" onclick="setPeriodo('mensal')">Mensal</button>
-          <button class="filtro-tab" data-periodo="semanal" onclick="setPeriodo('semanal')">Semanal</button>
-        </div>
-        <div class="filtro-controles" id="controles-mensal">
-          <select id="r-mes" class="select-inline" onchange="renderRelatorio()">
+        <div class="filter-bar">
+          <select id="f-cliente" onchange="renderLancamentos()"></select>
+          <select id="f-mes" onchange="renderLancamentos()">
+            <option value="">Todos os meses</option>
             <option value="01">Janeiro</option><option value="02">Fevereiro</option>
             <option value="03">Marco</option><option value="04">Abril</option>
             <option value="05">Maio</option><option value="06">Junho</option>
@@ -208,165 +212,212 @@
             <option value="09">Setembro</option><option value="10">Outubro</option>
             <option value="11">Novembro</option><option value="12">Dezembro</option>
           </select>
-          <select id="r-ano" class="select-inline" onchange="renderRelatorio()"></select>
         </div>
-        <div class="filtro-controles" id="controles-semanal" style="display:none">
-          <input type="date" id="r-semana-inicio" class="select-inline" onchange="renderRelatorio()">
-          <span class="filtro-sep">ate</span>
-          <input type="date" id="r-semana-fim" class="select-inline" onchange="renderRelatorio()">
-        </div>
+        <div id="lanc-list"></div>
       </div>
-      <div class="metrics" id="r-metrics"></div>
-      <div class="section-label">Pecas por cliente</div>
-      <div class="card"><div id="r-barras" style="padding:4px 0"></div></div>
-      <div class="section-label">Detalhamento</div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th><input type="checkbox" id="chk-all" onclick="toggleAllChk()"></th>
-                <th>Cliente</th><th>Pecas</th><th>Faturamento</th><th>Em aberto</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="tbl-relatorio"></tbody>
-          </table>
-        </div>
-        <div id="bulk-actions" class="bulk-bar" style="display:none">
-          <span id="bulk-label"></span>
-          <button class="btn-primary btn-sm" onclick="marcarSelecionadosPago()">Marcar como pago</button>
-          <button class="btn-ghost btn-sm" onclick="desmarcarTodos()">Cancelar</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- PENDENTES -->
-    <div id="pendentes" class="page">
-      <div class="page-header">
-        <div>
-          <h2 class="page-title">Pendentes</h2>
-          <span class="badge-total" id="pendentes-total"></span>
+      <!-- RELATORIO -->
+      <div id="relatorio" class="page">
+        <div class="page-header">
+          <div><h2 class="page-title">Relatorio</h2></div>
+        </div>
+        <div class="relatorio-filtros">
+          <div class="filtro-tabs">
+            <button class="filtro-tab active" data-periodo="mensal" onclick="setPeriodo('mensal')">Mensal</button>
+            <button class="filtro-tab" data-periodo="semanal" onclick="setPeriodo('semanal')">Semanal</button>
+          </div>
+          <div class="filtro-controles" id="controles-mensal">
+            <select id="r-mes" class="select-inline" onchange="renderRelatorio()">
+              <option value="01">Janeiro</option><option value="02">Fevereiro</option>
+              <option value="03">Marco</option><option value="04">Abril</option>
+              <option value="05">Maio</option><option value="06">Junho</option>
+              <option value="07">Julho</option><option value="08">Agosto</option>
+              <option value="09">Setembro</option><option value="10">Outubro</option>
+              <option value="11">Novembro</option><option value="12">Dezembro</option>
+            </select>
+            <select id="r-ano" class="select-inline" onchange="renderRelatorio()"></select>
+          </div>
+          <div class="filtro-controles" id="controles-semanal" style="display:none">
+            <input type="date" id="r-semana-inicio" class="select-inline" onchange="renderRelatorio()">
+            <span class="filtro-sep">ate</span>
+            <input type="date" id="r-semana-fim" class="select-inline" onchange="renderRelatorio()">
+          </div>
+        </div>
+        <div class="metrics" id="r-metrics"></div>
+        <div class="section-label">Pecas por cliente</div>
+        <div class="card"><div id="r-barras" style="padding:4px 0"></div></div>
+        <div class="section-label">Detalhamento</div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="chk-all" onclick="toggleAllChk()"></th>
+                  <th>Cliente</th><th>Pecas</th><th>Faturamento</th><th>Em aberto</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="tbl-relatorio"></tbody>
+            </table>
+          </div>
+          <div id="bulk-actions" class="bulk-bar" style="display:none">
+            <span id="bulk-label"></span>
+            <button class="btn-primary btn-sm" onclick="marcarSelecionadosPago()">Marcar como pago</button>
+            <button class="btn-ghost btn-sm" onclick="desmarcarTodos()">Cancelar</button>
+          </div>
         </div>
       </div>
-      <div class="metrics" id="pendentes-metrics"></div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th><input type="checkbox" id="chk-pend-all" onclick="toggleAllPendChk()"></th>
-                <th>Cliente</th><th>Em aberto</th><th>Ultima ficha</th><th></th>
-              </tr>
-            </thead>
-            <tbody id="tbl-pendentes"></tbody>
-          </table>
-        </div>
-        <div id="pend-bulk-actions" class="bulk-bar" style="display:none">
-          <span id="pend-bulk-label"></span>
-          <button class="btn-primary btn-sm" onclick="marcarPendentesPago()">Quitar selecionados</button>
-          <button class="btn-ghost btn-sm" onclick="desmarcarPendentes()">Cancelar</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- SERVICOS -->
-    <div id="lavados" class="page">
-      <div class="page-header">
-        <div><h2 class="page-title">Servicos</h2></div>
-        <button class="btn-add" onclick="toggleForm('form-lavado')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Novo servico
-        </button>
-      </div>
-      <div class="form-card" id="form-lavado" style="display:none">
-        <div class="form-card-title">Novo servico</div>
-        <div class="form-row-2">
-          <div class="form-group"><label>Nome</label><input id="lv-nome" placeholder="Ex: Stone..." autocomplete="off" autocorrect="off"></div>
-          <div class="form-group"><label>Valor padrao (R$)</label><input type="number" id="lv-valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+      <!-- PENDENTES -->
+      <div id="pendentes" class="page">
+        <div class="page-header">
+          <div>
+            <h2 class="page-title">Pendentes</h2>
+            <span class="badge-total" id="pendentes-total"></span>
+          </div>
         </div>
+        <div class="metrics" id="pendentes-metrics"></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th><input type="checkbox" id="chk-pend-all" onclick="toggleAllPendChk()"></th>
+                  <th>Cliente</th><th>Em aberto</th><th>Ultima ficha</th><th></th>
+                </tr>
+              </thead>
+              <tbody id="tbl-pendentes"></tbody>
+            </table>
+          </div>
+          <div id="pend-bulk-actions" class="bulk-bar" style="display:none">
+            <span id="pend-bulk-label"></span>
+            <button class="btn-primary btn-sm" onclick="marcarPendentesPago()">Quitar selecionados</button>
+            <button class="btn-ghost btn-sm" onclick="desmarcarPendentes()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SERVICOS -->
+      <div id="lavados" class="page">
+        <div class="page-header">
+          <div><h2 class="page-title">Servicos</h2></div>
+          <button class="btn-add" onclick="toggleForm('form-lavado')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo servico
+          </button>
+        </div>
+        <div class="form-card" id="form-lavado" style="display:none">
+          <div class="form-card-title">Novo servico</div>
+          <div class="form-row-2">
+            <div class="form-group"><label>Nome</label><input id="lv-nome" placeholder="Ex: Stone..." autocomplete="off" autocorrect="off"></div>
+            <div class="form-group"><label>Valor padrao (R$)</label><input type="number" id="lv-valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
+          </div>
+          <div class="form-actions">
+            <button class="btn-primary" onclick="salvarLavado()">Salvar</button>
+            <button class="btn-ghost" onclick="toggleForm('form-lavado')">Cancelar</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Servico</th><th>Valor</th><th>Usos</th><th></th></tr></thead>
+              <tbody id="tbl-lavados"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- BOTTOM NAV (mobile) -->
+    <nav class="bottom-nav">
+      <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span class="nav-label">Painel</span>
+      </button>
+      <button class="nav-item" onclick="showPage('clientes')" data-page="clientes">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+        <span class="nav-label">Clientes</span>
+      </button>
+      <button class="nav-item" onclick="showPage('lancamentos')" data-page="lancamentos">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span class="nav-label">Fichas</span>
+      </button>
+      <button class="nav-item" onclick="showPage('pendentes')" data-page="pendentes">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="nav-label">Pendentes</span>
+      </button>
+      <button class="nav-item" onclick="showPage('relatorio')" data-page="relatorio">
+        <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span class="nav-label">Relatorio</span>
+      </button>
+    </nav>
+
+    <!-- MODAL PAGAMENTO -->
+    <div id="modal-bg" class="modal-bg" style="display:none" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Registrar pagamento</div>
+        <div class="form-group"><label>Cliente</label><input id="m-cliente" disabled></div>
+        <div class="form-group"><label>Valor em aberto</label><input id="m-aberto" disabled class="input-danger"></div>
+        <div class="form-group"><label>Valor pago (R$)</label><input type="number" id="m-valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
         <div class="form-actions">
-          <button class="btn-primary" onclick="salvarLavado()">Salvar</button>
-          <button class="btn-ghost" onclick="toggleForm('form-lavado')">Cancelar</button>
-        </div>
-      </div>
-      <div class="card">
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>Servico</th><th>Valor</th><th>Usos</th><th></th></tr></thead>
-            <tbody id="tbl-lavados"></tbody>
-          </table>
+          <button class="btn-primary" onclick="confirmarPagamento()">Confirmar</button>
+          <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
         </div>
       </div>
     </div>
 
-  </main>
-
-  <!-- BOTTOM NAV (mobile) -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard">
-      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-      <span class="nav-label">Painel</span>
-    </button>
-    <button class="nav-item" onclick="showPage('clientes')" data-page="clientes">
-      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
-      <span class="nav-label">Clientes</span>
-    </button>
-    <button class="nav-item" onclick="showPage('lancamentos')" data-page="lancamentos">
-      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-      <span class="nav-label">Fichas</span>
-    </button>
-    <button class="nav-item" onclick="showPage('pendentes')" data-page="pendentes">
-      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      <span class="nav-label">Pendentes</span>
-    </button>
-    <button class="nav-item" onclick="showPage('relatorio')" data-page="relatorio">
-      <svg class="nav-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span class="nav-label">Relatorio</span>
-    </button>
-  </nav>
-
-  <!-- MODAL PAGAMENTO -->
-  <div id="modal-bg" class="modal-bg" style="display:none" onclick="closeModal()">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-handle"></div>
-      <div class="modal-title">Registrar pagamento</div>
-      <div class="form-group"><label>Cliente</label><input id="m-cliente" disabled></div>
-      <div class="form-group"><label>Valor em aberto</label><input id="m-aberto" disabled class="input-danger"></div>
-      <div class="form-group"><label>Valor pago (R$)</label><input type="number" id="m-valor" placeholder="0,00" step="0.01" inputmode="decimal"></div>
-      <div class="form-actions">
-        <button class="btn-primary" onclick="confirmarPagamento()">Confirmar</button>
-        <button class="btn-ghost" onclick="closeModal()">Cancelar</button>
+    <!-- MODAL EDITAR FICHA -->
+    <div id="modal-edit-bg" class="modal-bg" style="display:none" onclick="closeEditModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-handle"></div>
+        <div class="modal-title">Editar ficha</div>
+        <div class="form-group"><label>Peca</label><input id="e-peca" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
+        <div class="form-group"><label>Servico</label><select id="e-lavado"></select></div>
+        <div class="form-group"><label>Data</label><input type="date" id="e-data"></div>
+        <div class="form-row-2">
+          <div class="form-group"><label>Quantidade</label><input type="number" id="e-qtd" placeholder="0" inputmode="numeric" oninput="updateEditPreview()"></div>
+          <div class="form-group"><label>Valor unit. (R$)</label><input type="number" id="e-valor" placeholder="0,00" step="0.01" inputmode="decimal" oninput="updateEditPreview()"></div>
+        </div>
+        <div id="e-preview" class="preview-total"></div>
+        <div class="form-actions">
+          <button class="btn-primary" onclick="salvarEdicaoFicha()">Salvar</button>
+          <button class="btn-ghost" onclick="closeEditModal()">Cancelar</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- MODAL EDITAR FICHA -->
-  <div id="modal-edit-bg" class="modal-bg" style="display:none" onclick="closeEditModal()">
-    <div class="modal" onclick="event.stopPropagation()">
-      <div class="modal-handle"></div>
-      <div class="modal-title">Editar ficha</div>
-      <div class="form-group"><label>Peca</label><input id="e-peca" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
-      <div class="form-group"><label>Servico</label><select id="e-lavado"></select></div>
-      <div class="form-group"><label>Data</label><input type="date" id="e-data"></div>
-      <div class="form-row-2">
-        <div class="form-group"><label>Quantidade</label><input type="number" id="e-qtd" placeholder="0" inputmode="numeric" oninput="updateEditPreview()"></div>
-        <div class="form-group"><label>Valor unit. (R$)</label><input type="number" id="e-valor" placeholder="0,00" step="0.01" inputmode="decimal" oninput="updateEditPreview()"></div>
+  </div><!-- fim app-admin -->
+
+  <!-- APP FUNCIONARIO -->
+  <div id="app-funcionario" style="display:none">
+    <div class="func-wrap">
+      <div class="func-header">
+        <img src="img/logo-nova-lavanderia.png" alt="Lavanderia Emanoel" class="func-logo">
+        <button class="btn-sair-mobile" onclick="fazerLogout()">Sair</button>
       </div>
-      <div id="e-preview" class="preview-total"></div>
-      <div class="form-actions">
-        <button class="btn-primary" onclick="salvarEdicaoFicha()">Salvar</button>
-        <button class="btn-ghost" onclick="closeEditModal()">Cancelar</button>
+      <div class="func-body">
+        <h2 class="page-title" style="margin-bottom:18px">Nova ficha</h2>
+        <div class="form-card" style="display:block">
+          <div class="form-group"><label>Cliente</label><select id="f-cliente-func"></select></div>
+          <div class="form-group"><label>Data</label><input type="date" id="f-data-func"></div>
+          <div class="form-group"><label>Peca</label><input id="f-peca-func" placeholder="Ex: Shorts, Calcas..." autocomplete="off" autocorrect="off"></div>
+          <div class="form-group"><label>Servico</label><select id="f-lavado-func"></select></div>
+          <div class="form-group"><label>Quantidade</label><input type="number" id="f-qtd-func" placeholder="0" inputmode="numeric"></div>
+          <div id="func-erro" class="login-erro" style="display:none"></div>
+          <div id="func-ok" class="func-ok" style="display:none">Ficha salva com sucesso!</div>
+          <div class="form-actions" style="margin-top:16px">
+            <button class="btn-primary" onclick="salvarFichaFunc()">Salvar ficha</button>
+          </div>
+        </div>
+        <div class="section-label">Fichas do dia</div>
+        <div id="func-fichas-hoje"></div>
       </div>
     </div>
-  </div>
+  </div><!-- fim app-funcionario -->
 
   <div id="print-area" style="display:none"><div id="print-content"></div></div>
-  <style>
-    @media print {
-      body > *:not(#print-area){display:none!important}
-      #print-area{display:block!important;position:fixed;top:0;left:0;width:58mm;padding:3mm;background:white;font-family:'Courier New',monospace;font-size:9pt;color:#000}
-    }
-  </style>
+  <style>@media print{body>*:not(#print-area){display:none!important}#print-area{display:block!important;position:fixed;top:0;left:0;width:58mm;padding:3mm;background:white;font-family:'Courier New',monospace;font-size:9pt;color:#000}}</style>
 
   <script type="module" src="app.js"></script>
 </body>
