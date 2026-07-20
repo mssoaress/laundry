@@ -332,11 +332,13 @@ function renderLancamentos() {
         <span class="lanc-tipo-chip">${esc(l.lavado)}</span>
       </div>
       <div class="lanc-card-right">
-        <div class="lanc-card-total">${esc(fmt(l.qtd*l.valor))}</div>
-        <div class="lanc-card-date">${esc(formatDate(l.data))}</div>
-        <div style="display:flex;gap:5px;margin-top:6px;justify-content:flex-end">
+        <div class="lanc-card-btns">
           <button class="btn-edit-sm" onclick="editarFicha('${esc(l.id)}')">Editar</button>
           <button class="btn-danger-sm" onclick="deletarLanc('${esc(l.id)}')">Remover</button>
+        </div>
+        <div class="lanc-card-info">
+          <div class="lanc-card-total">${esc(fmt(l.qtd*l.valor))}</div>
+          <div class="lanc-card-date">${esc(formatDate(l.data))}</div>
         </div>
       </div>
     </div>`).join('') +
@@ -538,7 +540,23 @@ function renderDetalheCliente(cid) {
     : pagamentos.map(p=>`<div class="pgto-card"><div><div class="pgto-card-info">Pagamento registrado</div><div class="pgto-card-data">${esc(formatDate(p.data))}</div></div><div class="pgto-card-valor">+ ${esc(fmt(p.valor))}</div></div>`).join('');
   document.getElementById('detalhe-todas-fichas').innerHTML=fichas.length===0
     ? '<div class="empty-detalhe">Nenhuma ficha ainda</div>'
-    : fichas.map(l=>`<div class="lanc-card"><div class="lanc-card-left"><div class="lanc-card-peca">${esc(l.peca)}</div><div class="lanc-card-meta">${esc(fmtN(l.qtd))} pecas</div><span class="lanc-tipo-chip">${esc(l.lavado)}</span></div><div class="lanc-card-right"><div class="lanc-card-total">${esc(fmt(l.qtd*l.valor))}</div><div class="lanc-card-date">${esc(formatDate(l.data))}</div><div style="display:flex;gap:5px;margin-top:6px;justify-content:flex-end"><button class="btn-edit-sm" onclick="editarFicha('${esc(l.id)}')">Editar</button><button class="btn-danger-sm" onclick="deletarLanc('${esc(l.id)}')">Remover</button></div></div></div>`).join('');
+    : fichas.map(l=>`<div class="lanc-card">
+      <div class="lanc-card-left">
+        <div class="lanc-card-peca">${esc(l.peca)}</div>
+        <div class="lanc-card-meta">${esc(fmtN(l.qtd))} pecas</div>
+        <span class="lanc-tipo-chip">${esc(l.lavado)}</span>
+      </div>
+      <div class="lanc-card-right">
+        <div class="lanc-card-btns">
+          <button class="btn-edit-sm" onclick="editarFicha('${esc(l.id)}')">Editar</button>
+          <button class="btn-danger-sm" onclick="deletarLanc('${esc(l.id)}')">Remover</button>
+        </div>
+        <div class="lanc-card-info">
+          <div class="lanc-card-total">${esc(fmt(l.qtd*l.valor))}</div>
+          <div class="lanc-card-date">${esc(formatDate(l.data))}</div>
+        </div>
+      </div>
+    </div>`).join('');
 }
 
 function abrirModalDetalhe() { if(clienteDetalheId)abrirModal(clienteDetalheId); }
