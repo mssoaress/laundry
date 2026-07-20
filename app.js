@@ -4,9 +4,6 @@ import {
   getFirestore, collection, doc, setDoc, deleteDoc,
   onSnapshot, getDocs, writeBatch
 } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
-import {
-  getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDleTdgPI0bvoVN4DYNd6J5yZ9DU15dIn4",
@@ -19,23 +16,12 @@ const firebaseConfig = {
 
 const fireApp = initializeApp(firebaseConfig);
 const db_fire = getFirestore(fireApp);
-const auth    = getAuth(fireApp);
-
-/* ===== MAPEAMENTO USUARIO → ROLE
-   Chave: email usado no Firebase Auth
-   Valor: { role, nome }
-   Adicione ou altere aqui se criar mais usuarios ===== */
-const ROLES = {
-  'admin@lavanderia.com':       { role: 'admin',       nome: 'Admin' },
-  'funcionario@lavanderia.com': { role: 'funcionario', nome: 'Funcionario' },
-};
 
 /* ===== ESTADO ===== */
 let db = { clientes: [], lancamentos: [], pagamentos: [], lavados: [] };
-let appReady     = false;
-let paginaAtual  = 'dashboard';
-let roleAtual    = null;   // 'admin' | 'funcionario'
-let unsubListeners = [];   // para cancelar listeners ao fazer logout
+let appReady       = false;
+let paginaAtual    = 'dashboard';
+let unsubListeners = [];
 
 /* ===== SANITIZACAO XSS ===== */
 function esc(str) {
@@ -62,110 +48,7 @@ function hideLoading() {
   document.getElementById('loading-overlay').style.display = 'none';
 }
 
-/* ===== LOGIN / LOGOUT ===== */
-function mostrarLogin() {
-  document.getElementById('loading-overlay').style.display  = 'none';
-  document.getElementById('login-screen').style.display     = 'flex';
-  document.getElementById('app-admin').style.display        = 'none';
-  document.getElementById('app-funcionario').style.display  = 'none';
-}
 
-function toggleSenha() {
-  const input = document.getElementById('login-pass');
-  const icon  = document.getElementById('eye-icon');
-  if (input.type === 'password') {
-    input.type = 'text';
-    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
-  } else {
-    input.type = 'password';
-    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
-  }
-}
-
-async function fazerLogin() {
-  const usuario = document.getElementById('login-user').value.trim().toLowerCase();
-  const senha   = document.getElementById('login-pass').value;
-  const erroEl  = document.getElementById('login-erro');
-  erroEl.style.display = 'none';
-
-  if (!usuario || !senha) {
-    erroEl.textContent = 'Preencha usuario e senha.';
-    erroEl.style.display = 'block';
-    return;
-  }
-
-  // Monta email interno a partir do usuario digitado
-  // Se o usuario ja tiver @, usa como esta; senao adiciona @lavanderia.com
-  const email = usuario.includes('@') ? usuario : `${usuario}@lavanderia.com`;
-
-  const btn = document.querySelector('.btn-login');
-  btn.textContent = 'Entrando...';
-  btn.disabled = true;
-
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    // onAuthStateChanged cuida do resto
-  } catch (e) {
-    erroEl.textContent = 'Usuario ou senha incorretos.';
-    erroEl.style.display = 'block';
-    btn.textContent = 'Entrar';
-    btn.disabled = false;
-  }
-}
-
-// Enter no campo de senha faz login
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('login-pass')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') fazerLogin();
-  });
-  document.getElementById('login-user')?.addEventListener('keydown', e => {
-    if (e.key === 'Enter') document.getElementById('login-pass').focus();
-  });
-});
-
-async function fazerLogout() {
-  if (!confirm('Deseja sair do sistema?')) return;
-  // Cancela listeners antes de sair
-  unsubListeners.forEach(fn => fn());
-  unsubListeners = [];
-  appReady = false;
-  db = { clientes: [], lancamentos: [], pagamentos: [], lavados: [] };
-  await signOut(auth);
-}
-
-/* ===== AUTH STATE ===== */
-onAuthStateChanged(auth, async usuario => {
-  if (!usuario) {
-    mostrarLogin();
-    return;
-  }
-
-  showLoading('Verificando acesso...');
-
-  const info = ROLES[usuario.email];
-  if (!info) {
-    // Email nao mapeado — nega acesso
-    await signOut(auth);
-    document.getElementById('login-erro').textContent = 'Acesso nao autorizado.';
-    document.getElementById('login-erro').style.display = 'block';
-    mostrarLogin();
-    return;
-  }
-
-  roleAtual = info.role;
-
-  // Atualiza nome na sidebar
-  const usernameEl = document.getElementById('sidebar-username');
-  if (usernameEl) usernameEl.textContent = info.nome;
-
-  // Reseta botao de login
-  const btn = document.querySelector('.btn-login');
-  if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
-  document.getElementById('login-screen').style.display = 'none';
-
-  await migrarDadosIniciais();
-  iniciarListeners();
-});
 
 /* ===== MIGRACAO INICIAL ===== */
 async function migrarDadosIniciais() {
@@ -189,12 +72,10 @@ function iniciarListeners() {
     }
   }
 
-  const u1 = onSnapshot(collection(db_fire, 'clientes'),    s => { db.clientes    = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.clientes    = true; check(); if (appReady) refreshCurrentPage(); });
-  const u2 = onSnapshot(collection(db_fire, 'lancamentos'), s => { db.lancamentos = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lancamentos = true; check(); if (appReady) refreshCurrentPage(); });
-  const u3 = onSnapshot(collection(db_fire, 'pagamentos'),  s => { db.pagamentos  = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.pagamentos  = true; check(); if (appReady) refreshCurrentPage(); });
-  const u4 = onSnapshot(collection(db_fire, 'lavados'),     s => { db.lavados     = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lavados     = true; check(); if (appReady) { populateLavadoSelects(); refreshCurrentPage(); } });
-
-  unsubListeners = [u1, u2, u3, u4];
+  onSnapshot(collection(db_fire, 'clientes'),    s => { db.clientes    = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.clientes    = true; check(); if (appReady) refreshCurrentPage(); });
+  onSnapshot(collection(db_fire, 'lancamentos'), s => { db.lancamentos = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lancamentos = true; check(); if (appReady) refreshCurrentPage(); });
+  onSnapshot(collection(db_fire, 'pagamentos'),  s => { db.pagamentos  = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.pagamentos  = true; check(); if (appReady) refreshCurrentPage(); });
+  onSnapshot(collection(db_fire, 'lavados'),     s => { db.lavados     = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lavados     = true; check(); if (appReady) { populateLavadoSelects(); refreshCurrentPage(); } });
 }
 
 /* ===== FIRESTORE HELPERS ===== */
@@ -231,13 +112,6 @@ function fatDeCliente(cid, lancs)   { return lancs.filter(l => l.cid == cid).red
 
 /* ===== INICIALIZACAO ===== */
 function inicializarApp() {
-  if (roleAtual === 'funcionario') {
-    inicializarFuncionario();
-    return;
-  }
-  // ADMIN — CSS cuida do layout, JS só inicializa dados
-  // Mostra o app removendo o inline display:none — CSS @media define o valor correto
-  document.getElementById('app-admin').removeAttribute('style');
 
   const mes  = mesAtual();
   const rMes = document.getElementById('r-mes');
@@ -258,19 +132,7 @@ function inicializarApp() {
   renderDashboard();
 }
 
-/* ===== FUNCIONARIO ===== */
-function inicializarFuncionario() {
-  document.getElementById('app-funcionario').style.display = 'block';
 
-  // Data de hoje
-  const dEl = document.getElementById('f-data-func');
-  if (dEl) dEl.value = hojeISO();
-
-  // Popula selects do funcionario
-  popularSelectFuncCliente();
-  popularSelectFuncLavado();
-  renderFichasHoje();
-}
 
 function popularSelectFuncCliente() {
   const sel = document.getElementById('f-cliente-func');
@@ -294,63 +156,7 @@ function popularSelectFuncLavado() {
   });
 }
 
-async function salvarFichaFunc() {
-  const cid   = document.getElementById('f-cliente-func').value;
-  const data  = document.getElementById('f-data-func').value;
-  const peca  = document.getElementById('f-peca-func').value.trim();
-  const lavado= document.getElementById('f-lavado-func').value;
-  const qtd   = parseInt(document.getElementById('f-qtd-func').value);
-  const erroEl = document.getElementById('func-erro');
-  const okEl   = document.getElementById('func-ok');
-  erroEl.style.display = 'none';
-  okEl.style.display   = 'none';
 
-  if (!cid || !data || !peca || !qtd || qtd <= 0) {
-    erroEl.textContent = 'Preencha todos os campos.';
-    erroEl.style.display = 'block';
-    return;
-  }
-
-  // Pega o valor do lavado cadastrado pelo admin
-  const lavadoDoc = db.lavados.find(lv => lv.nome === lavado);
-  const valor = lavadoDoc ? lavadoDoc.valor : 0;
-
-  const id = gerarId();
-  await salvarDoc('lancamentos', id, { id, cid, data, peca, lavado, qtd, valor });
-
-  // Limpa form
-  document.getElementById('f-peca-func').value = '';
-  document.getElementById('f-qtd-func').value  = '';
-  document.getElementById('f-cliente-func').value = '';
-  okEl.style.display = 'block';
-  setTimeout(() => { okEl.style.display = 'none'; }, 3000);
-  renderFichasHoje();
-}
-
-function renderFichasHoje() {
-  const container = document.getElementById('func-fichas-hoje');
-  if (!container) return;
-  const hoje = hojeISO();
-  const fichas = [...db.lancamentos]
-    .filter(l => l.data === hoje)
-    .sort((a, b) => b.id.localeCompare(a.id));
-
-  if (fichas.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-4);font-size:.82rem">Nenhuma ficha lancada hoje</div>';
-    return;
-  }
-  container.innerHTML = fichas.map(l => `
-    <div class="lanc-card">
-      <div class="lanc-card-left">
-        <div class="lanc-card-peca">${esc(l.peca)}</div>
-        <div class="lanc-card-meta">${esc(nomeCliente(l.cid))} &middot; ${esc(fmtN(l.qtd))} pecas</div>
-        <span class="lanc-tipo-chip">${esc(l.lavado)}</span>
-      </div>
-      <div class="lanc-card-right">
-        <div class="lanc-card-date">${esc(formatDate(l.data))}</div>
-      </div>
-    </div>`).join('');
-}
 
 /* ===== NAVEGACAO (admin) ===== */
 function showPage(id) {
@@ -363,12 +169,6 @@ function showPage(id) {
 }
 
 function refreshCurrentPage() {
-  if (roleAtual === 'funcionario') {
-    popularSelectFuncCliente();
-    popularSelectFuncLavado();
-    renderFichasHoje();
-    return;
-  }
   const map = { dashboard: renderDashboard, clientes: renderClientes, lancamentos: renderLancamentos, relatorio: renderRelatorio, pendentes: renderPendentes, lavados: renderLavados, 'cliente-detalhe': () => { if (clienteDetalheId) renderDetalheCliente(clienteDetalheId); } };
   map[paginaAtual]?.();
 }
@@ -959,8 +759,7 @@ window.toggleAllPendChk=toggleAllPendChk; window.desmarcarPendentes=desmarcarPen
 window.abrirDetalheCliente=abrirDetalheCliente; window.abrirModalDetalhe=abrirModalDetalhe;
 window.editarFicha=editarFicha; window.closeEditModal=closeEditModal; window.salvarEdicaoFicha=salvarEdicaoFicha; window.updateEditPreview=updateEditPreview;
 window.imprimirNota=imprimirNota; window.setPeriodo=setPeriodo;
-window.fazerLogin=fazerLogin; window.fazerLogout=fazerLogout; window.toggleSenha=toggleSenha;
-window.salvarFichaFunc=salvarFichaFunc;
 
 /* ===== BOOT ===== */
 showLoading('Conectando...');
+migrarDadosIniciais().then(() => iniciarListeners());
