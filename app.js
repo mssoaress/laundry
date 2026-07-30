@@ -1,3 +1,62 @@
+/* ===== ACESSO PROTEGIDO ===== */
+// A senha nao fica em texto puro: guardamos apenas o hash SHA-256 dela.
+const AUTH_HASH = "2cddab7030321d19487e561e20e52c3b80e09f0b98c7361e6b1a3dc3e5a8a241";
+const AUTH_KEY  = "le_auth_ok";
+
+async function sha256(texto) {
+  const buf = new TextEncoder().encode(texto);
+  const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function mostrarTelaSenha() {
+  return new Promise((resolve) => {
+    document.getElementById('loading-overlay').style.display = 'none';
+    const overlay = document.createElement('div');
+    overlay.className = 'loading-overlay';
+    overlay.id = 'auth-overlay';
+    overlay.innerHTML = `
+      <div class="loading-inner" style="width:min(280px,88vw)">
+        <img src="img/logo-nova-lavanderia.png" alt="Logo" class="loading-logo-img">
+        <div class="form-group" style="width:100%">
+          <label style="color:rgba(255,255,255,.85)">Senha de acesso</label>
+          <input type="password" id="auth-senha" inputmode="numeric" autocomplete="off"
+            style="text-align:center;font-size:1.1rem;letter-spacing:.3em">
+        </div>
+        <div id="auth-erro" style="color:#ffb4b4;font-size:.8rem;font-weight:600;min-height:1em"></div>
+        <button class="btn-primary" id="auth-btn" style="width:100%">Entrar</button>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const input = overlay.querySelector('#auth-senha');
+    const erro  = overlay.querySelector('#auth-erro');
+    const btn   = overlay.querySelector('#auth-btn');
+    input.focus();
+
+    async function tentar() {
+      const valor = input.value.trim();
+      if (!valor) return;
+      const hash = await sha256(valor);
+      if (hash === AUTH_HASH) {
+        localStorage.setItem(AUTH_KEY, '1');
+        overlay.remove();
+        resolve();
+      } else {
+        erro.textContent = 'Senha incorreta';
+        input.value = '';
+        input.focus();
+      }
+    }
+    btn.addEventListener('click', tentar);
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') tentar(); });
+  });
+}
+
+async function garantirAcesso() {
+  if (localStorage.getItem(AUTH_KEY) === '1') return;
+  await mostrarTelaSenha();
+}
+
 /* ===== FIREBASE ===== */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
 import {
@@ -780,4 +839,7 @@ window.imprimirNota=imprimirNota; window.setPeriodo=setPeriodo;
 
 /* ===== BOOT ===== */
 showLoading('Conectando...');
-migrarDadosIniciais().then(() => iniciarListeners());
+garantirAcesso().then(() => {
+  document.getElementById('loading-overlay').style.display = 'flex';
+  migrarDadosIniciais().then(() => iniciarListeners());
+});
