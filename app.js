@@ -574,7 +574,7 @@ function abrirDetalheCliente(cid) { clienteDetalheId=cid; document.querySelector
 
 function renderDetalheCliente(cid) {
   const c=db.clientes.find(x=>x.id==cid); if(!c)return;
-  const fichas=[...db.lancamentos.filter(l=>l.cid==cid)].sort((a,b)=>b.id.localeCompare(a.id));
+  const fichas=[...db.lancamentos.filter(l=>l.cid==cid)].sort((a,b)=>b.data.localeCompare(a.data));
   const pagamentos=[...db.pagamentos.filter(p=>p.cid==cid)].sort((a,b)=>b.data.localeCompare(a.data));
   const totalFat=totalLanc(cid),totalPg=totalPago(cid),ab=totalAberto(cid),totalPcs=fichas.reduce((s,l)=>s+l.qtd,0);
   document.getElementById('detalhe-header').innerHTML=`
@@ -583,7 +583,7 @@ function renderDetalheCliente(cid) {
       <div style="flex:1;min-width:0"><div class="detalhe-nome">${esc(c.nome)}</div><div class="detalhe-tel">${esc(c.tel||'Sem telefone')}</div><div style="font-size:.68rem;color:rgba(255,255,255,.5);margin-top:3px">${esc(String(fichas.length))} ficha${fichas.length!==1?'s':''} &middot; ${esc(fmtN(totalPcs))} pecas</div></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:16px;width:100%">
-      <button onclick="imprimirNota()" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:#fff;font-size:.82rem;font-weight:600;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif">Compartilhar nota</button>
+      <button onclick="abrirSelecaoNota()" style="flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);color:#fff;font-size:.82rem;font-weight:600;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif">Compartilhar nota</button>
       <button onclick="abrirModalDetalhe()" style="flex:1;background:rgba(255,255,255,.22);border:none;border-radius:var(--r);color:#fff;font-size:.82rem;font-weight:700;padding:10px;cursor:pointer;font-family:'DM Sans',sans-serif">Registrar pagamento</button>
     </div>`;
   document.getElementById('detalhe-resumo').innerHTML=`
@@ -648,12 +648,72 @@ async function salvarEdicaoFicha() {
   }
 }
 
+/* ===== SELECAO DE FICHAS PARA NOTA ===== */
+function abrirSelecaoNota() {
+  const cid = clienteDetalheId; if (!cid) return;
+  const fichas = [...db.lancamentos.filter(l => l.cid == cid)].sort((a, b) => b.data.localeCompare(a.data));
+  if (!fichas.length) { alert('Este cliente nao possui fichas.'); return; }
+
+  const bg = document.createElement('div');
+  bg.className = 'modal-bg';
+  bg.id = 'nota-sel-bg';
+  bg.onclick = (e) => { if (e.target === bg) fecharSelecaoNota(); };
+
+  const itensHtml = fichas.map(l => `
+    <label style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--r);cursor:pointer">
+      <input type="checkbox" class="chk-nota" data-id="${esc(String(l.id))}" data-total="${l.qtd * l.valor}" checked onchange="atualizarTotalSelecaoNota()">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text-1)">${esc(String(l.qtd))}x ${esc(l.peca)} <span class="lanc-tipo-chip">${esc(l.lavado)}</span></div>
+        <div style="font-size:.72rem;color:var(--text-3);margin-top:2px">${esc(formatDate(l.data))}</div>
+      </div>
+      <div style="font-size:.85rem;font-weight:700;color:var(--text-1);white-space:nowrap">${esc(fmt(l.qtd * l.valor))}</div>
+    </label>`).join('');
+
+  bg.innerHTML = `
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Selecionar fichas para a nota</div>
+      <div style="display:flex;gap:16px;margin-bottom:12px">
+        <a href="#" onclick="event.preventDefault();document.querySelectorAll('.chk-nota').forEach(c=>c.checked=true);atualizarTotalSelecaoNota()" style="font-size:.78rem;font-weight:600;color:var(--accent)">Selecionar todas</a>
+        <a href="#" onclick="event.preventDefault();document.querySelectorAll('.chk-nota').forEach(c=>c.checked=false);atualizarTotalSelecaoNota()" style="font-size:.78rem;font-weight:600;color:var(--text-3)">Nenhuma</a>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;max-height:45vh;overflow-y:auto">${itensHtml}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <span style="font-size:.8rem;color:var(--text-3);font-weight:600">Total selecionado</span>
+        <span id="nota-sel-total" style="font-size:1.05rem;font-weight:700;color:var(--accent)"></span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:16px">
+        <button class="btn-primary" style="flex:1;background:var(--gray-100);color:var(--text-2)" onclick="fecharSelecaoNota()">Cancelar</button>
+        <button class="btn-primary" style="flex:2" onclick="confirmarSelecaoNota()">Gerar nota</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bg);
+  atualizarTotalSelecaoNota();
+}
+
+function atualizarTotalSelecaoNota() {
+  const total = Array.from(document.querySelectorAll('.chk-nota:checked')).reduce((s, c) => s + parseFloat(c.dataset.total), 0);
+  const el = document.getElementById('nota-sel-total'); if (el) el.textContent = fmt(total);
+}
+
+function fecharSelecaoNota() { const bg = document.getElementById('nota-sel-bg'); if (bg) bg.remove(); }
+
+function confirmarSelecaoNota() {
+  const ids = Array.from(document.querySelectorAll('.chk-nota:checked')).map(c => c.dataset.id);
+  if (!ids.length) { alert('Selecione ao menos uma ficha.'); return; }
+  fecharSelecaoNota();
+  imprimirNota(ids);
+}
+
 /* ===== NOTA ===== */
-function imprimirNota() {
+function imprimirNota(idsSelecionados) {
   const cid = clienteDetalheId; if (!cid) return;
   const c   = db.clientes.find(x => x.id == cid); if (!c) return;
-  const fichas   = [...db.lancamentos.filter(l => l.cid == cid)].sort((a, b) => a.id.localeCompare(b.id));
-  const totalFat = totalLanc(cid);
+  let fichas = [...db.lancamentos.filter(l => l.cid == cid)];
+  if (Array.isArray(idsSelecionados)) fichas = fichas.filter(l => idsSelecionados.includes(String(l.id)));
+  fichas.sort((a, b) => a.data.localeCompare(b.data));
+  if (!fichas.length) { alert('Nenhuma ficha selecionada.'); return; }
+  const totalFat = fichas.reduce((s, l) => s + l.qtd * l.valor, 0);
   const hoje     = new Date().toLocaleDateString('pt-BR');
   const base     = window.location.pathname.replace(/\/[^/]*$/, '');
   const logoUrl  = window.location.origin + base + '/img/logo-nova-lavanderia.png';
@@ -836,6 +896,7 @@ window.toggleAllPendChk=toggleAllPendChk; window.desmarcarPendentes=desmarcarPen
 window.abrirDetalheCliente=abrirDetalheCliente; window.abrirModalDetalhe=abrirModalDetalhe;
 window.editarFicha=editarFicha; window.closeEditModal=closeEditModal; window.salvarEdicaoFicha=salvarEdicaoFicha; window.updateEditPreview=updateEditPreview;
 window.imprimirNota=imprimirNota; window.setPeriodo=setPeriodo;
+window.abrirSelecaoNota=abrirSelecaoNota; window.fecharSelecaoNota=fecharSelecaoNota; window.confirmarSelecaoNota=confirmarSelecaoNota; window.atualizarTotalSelecaoNota=atualizarTotalSelecaoNota;
 
 /* ===== BOOT ===== */
 showLoading('Conectando...');
