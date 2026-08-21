@@ -120,6 +120,17 @@ async function migrarDadosIniciais() {
 }
 
 /* ===== LISTENERS REALTIME ===== */
+// Varios onSnapshot podem disparar quase juntos (ex.: deletar cliente apaga
+// clientes + lancamentos + pagamentos num batch => 3 callbacks separados).
+// Sem isso, a pagina inteira re-renderiza 3x seguidas. Juntamos tudo que
+// chega no mesmo ciclo de eventos num unico refresh.
+let refreshAgendado = false;
+function refreshCurrentPageDebounced() {
+  if (refreshAgendado) return;
+  refreshAgendado = true;
+  Promise.resolve().then(() => { refreshAgendado = false; refreshCurrentPage(); });
+}
+
 function iniciarListeners() {
   let counts = { clientes: false, lancamentos: false, pagamentos: false, lavados: false };
 
@@ -131,10 +142,10 @@ function iniciarListeners() {
     }
   }
 
-  onSnapshot(collection(db_fire, 'clientes'),    s => { db.clientes    = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.clientes    = true; check(); if (appReady) refreshCurrentPage(); });
-  onSnapshot(collection(db_fire, 'lancamentos'), s => { db.lancamentos = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lancamentos = true; check(); if (appReady) refreshCurrentPage(); });
-  onSnapshot(collection(db_fire, 'pagamentos'),  s => { db.pagamentos  = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.pagamentos  = true; check(); if (appReady) refreshCurrentPage(); });
-  onSnapshot(collection(db_fire, 'lavados'),     s => { db.lavados     = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lavados     = true; check(); if (appReady) { populateLavadoSelects(); refreshCurrentPage(); } });
+  onSnapshot(collection(db_fire, 'clientes'),    s => { db.clientes    = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.clientes    = true; check(); if (appReady) refreshCurrentPageDebounced(); });
+  onSnapshot(collection(db_fire, 'lancamentos'), s => { db.lancamentos = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lancamentos = true; check(); if (appReady) refreshCurrentPageDebounced(); });
+  onSnapshot(collection(db_fire, 'pagamentos'),  s => { db.pagamentos  = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.pagamentos  = true; check(); if (appReady) refreshCurrentPageDebounced(); });
+  onSnapshot(collection(db_fire, 'lavados'),     s => { db.lavados     = s.docs.map(d => ({ ...d.data(), id: d.id })); counts.lavados     = true; check(); if (appReady) { populateLavadoSelects(); refreshCurrentPageDebounced(); } });
 }
 
 /* ===== FIRESTORE HELPERS ===== */
@@ -146,6 +157,32 @@ async function deletarDoc(col, id) { await deleteDoc(doc(db_fire, col, id)); }
 const MESES = ['Janeiro','Fevereiro','Marco','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 function fmt(v)  { return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fmtN(v) { return Number(v).toLocaleString('pt-BR'); }
+
+// Anima o valor de um card de metrica do numero anterior ate o novo, em vez
+// de trocar o texto instantaneamente quando um pagamento/ficha muda o total.
+// So anima em atualizacoes (2a renderizacao em diante) — no primeiro load a
+// pagina abre com os valores finais direto, sem contagem.
+const _valoresAnterioresMetrica = {};
+function renderMetricaAnimada(id, valorNovo, formatarFn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const anterior = _valoresAnterioresMetrica[id] ?? valorNovo;
+  _valoresAnterioresMetrica[id] = valorNovo;
+  if (anterior === valorNovo) { el.textContent = formatarFn(valorNovo); return; }
+  const duracao = 450, inicio = performance.now();
+  (function passo(agora) {
+    const t = Math.min(1, (agora - inicio) / duracao);
+    const suave = 1 - Math.pow(1 - t, 3); // ease-out cubic
+    el.textContent = formatarFn(anterior + (valorNovo - anterior) * suave);
+    if (t < 1) requestAnimationFrame(passo);
+  })(inicio);
+}
+
+// Empty state com icone, usado nas listas em cartao (nao em linhas de tabela).
+const _ICONE_VAZIO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 4v3M16 4v3M4 10h16"/><path d="M9 15h6"/></svg>';
+function emptyState(titulo, sub) {
+  return `<div class="empty-state">${_ICONE_VAZIO}<div class="empty-state-title">${esc(titulo)}</div>${sub ? `<div class="empty-state-sub">${esc(sub)}</div>` : ''}</div>`;
+}
 function mesAtual()  { return String(new Date().getMonth() + 1).padStart(2, '0'); }
 function anoAtual()  { return String(new Date().getFullYear()); }
 function hojeISO()   { return new Date().toISOString().split('T')[0]; }
@@ -169,6 +206,27 @@ function lancsIntervalo(ini, fim)   { return db.lancamentos.filter(l => l.data >
 function pecasDeCliente(cid, lancs) { return lancs.filter(l => l.cid == cid).reduce((s, l) => s + l.qtd, 0); }
 function fatDeCliente(cid, lancs)   { return lancs.filter(l => l.cid == cid).reduce((s, l) => s + l.qtd * l.valor, 0); }
 
+// totalLanc/totalPago/totalAberto acima filtram o array inteiro a cada chamada
+// (O(n) por cliente). Otimo pra um unico cliente (modal de pagamento, detalhe
+// do cliente), mas caro quando chamado dentro de um loop sobre todos os
+// clientes. Para essas telas (dashboard, lista de clientes, relatorio,
+// pendentes) usamos este mapa: uma unica passada por lancamentos e
+// pagamentos, totais prontos em O(1) por cliente.
+function calcularTotaisClientes() {
+  const mapa = new Map();
+  db.clientes.forEach(c => mapa.set(c.id, { lancado: 0, pago: 0, aberto: 0 }));
+  db.lancamentos.forEach(l => { const t = mapa.get(l.cid); if (t) t.lancado += l.qtd * l.valor; });
+  db.pagamentos.forEach(p  => { const t = mapa.get(p.cid); if (t) t.pago    += p.valor; });
+  mapa.forEach(t => { t.aberto = Math.max(0, t.lancado - t.pago); });
+  return mapa;
+}
+function totaisDe(mapaTotais, cid) { return mapaTotais.get(cid) || { lancado: 0, pago: 0, aberto: 0 }; }
+
+// Mesma ideia para nome de cliente: nomeCliente() faz find() a cada chamada,
+// caro dentro de .map()/.forEach() sobre uma lista de fichas. Este mapa
+// resolve o nome em O(1).
+function mapaClientesPorId() { return new Map(db.clientes.map(c => [c.id, c])); }
+
 /* ===== INICIALIZACAO ===== */
 function inicializarApp() {
 
@@ -189,30 +247,6 @@ function inicializarApp() {
   populateLavadoSelects();
   populateSelects();
   renderDashboard();
-}
-
-
-
-function popularSelectFuncCliente() {
-  const sel = document.getElementById('f-cliente-func');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">Selecione o cliente...</option>';
-  [...db.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).forEach(c => {
-    const o = document.createElement('option');
-    o.value = c.id; o.textContent = c.nome;
-    sel.appendChild(o);
-  });
-}
-
-function popularSelectFuncLavado() {
-  const sel = document.getElementById('f-lavado-func');
-  if (!sel) return;
-  sel.innerHTML = '';
-  [...db.lavados].sort((a, b) => a.nome.localeCompare(b.nome)).forEach(lv => {
-    const o = document.createElement('option');
-    o.value = lv.nome; o.textContent = lv.nome;
-    sel.appendChild(o);
-  });
 }
 
 
@@ -248,36 +282,44 @@ function toggleForm(id, preSelectCid) {
   }
 }
 
-function populateSelects() {
-  ['l-cliente', 'f-cliente'].forEach(sid => {
+// Helper unico pra preencher <select>s a partir de uma lista, usado tanto
+// pros selects de cliente quanto de lavado (antes era a mesma logica
+// duplicada em 2 funcoes quase identicas).
+function preencherSelects(ids, lista, { valueKey, labelKey, placeholder }) {
+  const ordenada = [...lista].sort((a, b) => a[labelKey].localeCompare(b[labelKey]));
+  ids.forEach(sid => {
     const sel = document.getElementById(sid);
     if (!sel) return;
     const val = sel.value;
-    sel.innerHTML = sid === 'f-cliente'
-      ? '<option value="">Todos os clientes</option>'
-      : '<option value="">Selecione...</option>';
-    [...db.clientes].sort((a, b) => a.nome.localeCompare(b.nome)).forEach(c => {
+    sel.innerHTML = placeholder ? `<option value="">${placeholder}</option>` : '';
+    ordenada.forEach(item => {
       const o = document.createElement('option');
-      o.value = c.id; o.textContent = c.nome;
+      o.value = item[valueKey]; o.textContent = item[labelKey];
       sel.appendChild(o);
     });
     if (val) sel.value = val;
   });
 }
 
+// Recriar as <option> do zero acontecia a cada render de pagina (mesmo
+// quando so um pagamento mudava), o que resetava a selecao/scroll do
+// select se o usuario estivesse com um form aberto. Agora comparamos uma
+// assinatura da lista e so reconstruimos quando ela de fato muda.
+let _assinaturaClientesSelect = null;
+function populateSelects() {
+  const assinatura = db.clientes.map(c => c.id + ':' + c.nome).sort().join('|');
+  if (assinatura === _assinaturaClientesSelect) return;
+  _assinaturaClientesSelect = assinatura;
+  preencherSelects(['f-cliente'], db.clientes, { valueKey: 'id', labelKey: 'nome', placeholder: 'Todos os clientes' });
+  preencherSelects(['l-cliente'], db.clientes, { valueKey: 'id', labelKey: 'nome', placeholder: 'Selecione...' });
+}
+
+let _assinaturaLavadosSelect = null;
 function populateLavadoSelects() {
-  ['l-lavado', 'e-lavado'].forEach(sid => {
-    const sel = document.getElementById(sid);
-    if (!sel) return;
-    const val = sel.value;
-    sel.innerHTML = '';
-    [...db.lavados].sort((a, b) => a.nome.localeCompare(b.nome)).forEach(lv => {
-      const o = document.createElement('option');
-      o.value = lv.nome; o.textContent = lv.nome;
-      sel.appendChild(o);
-    });
-    if (val) sel.value = val;
-  });
+  const assinatura = db.lavados.map(l => l.id + ':' + l.nome).sort().join('|');
+  if (assinatura === _assinaturaLavadosSelect) return;
+  _assinaturaLavadosSelect = assinatura;
+  preencherSelects(['l-lavado', 'e-lavado'], db.lavados, { valueKey: 'nome', labelKey: 'nome' });
 }
 
 /* ===== DASHBOARD ===== */
@@ -297,25 +339,30 @@ function renderDashboard() {
   const recebidoMes = pagosMes(mes, ano).reduce((s, p) => s + p.valor, 0);
 
   document.getElementById('metrics-cards').innerHTML = `
-    <div class="metric"><div class="lbl">Faturamento total</div><div class="val">${esc(fmt(totalFat))}</div></div>
-    <div class="metric"><div class="lbl">A receber</div><div class="val danger">${esc(fmt(totalAb))}</div></div>
-    <div class="metric"><div class="lbl">Total de pecas</div><div class="val">${esc(fmtN(totalPcs))}</div></div>
-    <div class="metric"><div class="lbl">Recebido em ${esc(MESES[parseInt(mes)-1])}</div><div class="val success">${esc(fmt(recebidoMes))}</div></div>`;
+    <div class="metric featured"><div class="lbl">Faturamento total</div><div class="val" id="m-fat-total"></div></div>
+    <div class="metric"><div class="lbl">A receber</div><div class="val danger" id="m-a-receber"></div></div>
+    <div class="metric"><div class="lbl">Total de pecas</div><div class="val" id="m-total-pecas"></div></div>
+    <div class="metric"><div class="lbl">Recebido em ${esc(MESES[parseInt(mes)-1])}</div><div class="val success" id="m-recebido-mes"></div></div>`;
+  renderMetricaAnimada('m-fat-total', totalFat, fmt);
+  renderMetricaAnimada('m-a-receber', totalAb, fmt);
+  renderMetricaAnimada('m-total-pecas', totalPcs, fmtN);
+  renderMetricaAnimada('m-recebido-mes', recebidoMes, fmt);
 
+  const totais = calcularTotaisClientes();
   let rowsAberto = '';
-  [...db.clientes].sort((a,b) => totalAberto(b.id) - totalAberto(a.id)).forEach(c => {
-    const lancado = totalLanc(c.id);
-    const pago    = totalPago(c.id);
-    const ab      = totalAberto(c.id);
+  [...db.clientes].sort((a,b) => totaisDe(totais,b.id).aberto - totaisDe(totais,a.id).aberto).forEach(c => {
+    const { lancado, pago, aberto: ab } = totaisDe(totais, c.id);
     if (lancado === 0 && pago === 0) return;
     const badge = ab === 0 ? '<span class="badge badge-green">Em dia</span>' : ab < 200 ? '<span class="badge badge-amber">Parcial</span>' : '<span class="badge badge-red">Aberto</span>';
     rowsAberto += `<tr><td><div class="client-row"><div class="avatar">${esc(initials(c.nome))}</div>${esc(c.nome)}</div></td><td>${esc(fmt(pago))}</td><td>${esc(fmt(ab))}</td><td>${badge}</td></tr>`;
   });
   document.getElementById('tbl-aberto').innerHTML = rowsAberto || '<tr class="empty-row"><td colspan="4">Nenhuma ficha cadastrada</td></tr>';
 
+  const mapaClientes = mapaClientesPorId();
   let rowsUlt = '';
   [...db.lancamentos].sort((a,b) => b.id.localeCompare(a.id)).slice(0,6).forEach(l => {
-    rowsUlt += `<tr><td>${esc(formatDate(l.data))}</td><td>${esc(nomeCliente(l.cid))}</td><td>${esc(l.peca)}</td><td>${esc(fmtN(l.qtd))}</td><td>${esc(fmt(l.qtd*l.valor))}</td></tr>`;
+    const nome = mapaClientes.get(l.cid)?.nome || '?';
+    rowsUlt += `<tr><td>${esc(formatDate(l.data))}</td><td>${esc(nome)}</td><td>${esc(l.peca)}</td><td>${esc(fmtN(l.qtd))}</td><td>${esc(fmt(l.qtd*l.valor))}</td></tr>`;
   });
   document.getElementById('tbl-ultimos').innerHTML = rowsUlt || '<tr class="empty-row"><td colspan="5">Nenhuma ficha</td></tr>';
 }
@@ -325,12 +372,12 @@ function renderClientes() {
   populateSelects();
   const mes = mesAtual(); const ano = anoAtual();
   const list = document.getElementById('client-list');
-  if (db.clientes.length === 0) { list.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--text-4);font-size:.85rem">Nenhum cliente cadastrado</div>'; return; }
+  if (db.clientes.length === 0) { list.innerHTML = emptyState('Nenhum cliente cadastrado', 'Adicione o primeiro cliente pra comecar a lancar fichas.'); return; }
+  const totais = calcularTotaisClientes();
+  const lancsMesAtual = lancsMes(mes, ano);
   list.innerHTML = [...db.clientes].sort((a,b) => a.nome.localeCompare(b.nome)).map(c => {
-    const pm     = pecasDeCliente(c.id, lancsMes(mes, ano));
-    const lancado = totalLanc(c.id);
-    const pago    = totalPago(c.id);
-    const ab      = totalAberto(c.id);
+    const pm     = pecasDeCliente(c.id, lancsMesAtual);
+    const { lancado, pago, aberto: ab } = totaisDe(totais, c.id);
     return `<div class="client-card" onclick="abrirDetalheCliente('${esc(c.id)}')" style="cursor:pointer">
       <div class="avatar" style="width:40px;height:40px;font-size:13px;flex-shrink:0">${esc(initials(c.nome))}</div>
       <div class="client-card-info">
@@ -380,14 +427,15 @@ function renderLancamentos() {
   if (fcid) lancs = lancs.filter(l => l.cid==fcid);
   if (fmes) lancs = lancs.filter(l => l.data.substring(5,7)===fmes);
   const container = document.getElementById('lanc-list');
-  if (lancs.length===0) { container.innerHTML='<div style="text-align:center;padding:3rem;color:var(--text-4);font-size:.85rem">Nenhuma ficha encontrada</div>'; return; }
+  if (lancs.length===0) { container.innerHTML=emptyState('Nenhuma ficha encontrada', 'Ajuste os filtros ou registre uma nova ficha.'); return; }
   const total = lancs.reduce((s,l)=>s+l.qtd*l.valor,0);
   const pecas = lancs.reduce((s,l)=>s+l.qtd,0);
+  const mapaClientes = mapaClientesPorId();
   container.innerHTML = lancs.map(l=>`
     <div class="lanc-card">
       <div class="lanc-card-left">
         <div class="lanc-card-peca">${esc(l.peca)}</div>
-        <div class="lanc-card-meta">${esc(nomeCliente(l.cid))} &middot; ${esc(fmtN(l.qtd))} pecas</div>
+        <div class="lanc-card-meta">${esc(mapaClientes.get(l.cid)?.nome || '?')} &middot; ${esc(fmtN(l.qtd))} pecas</div>
         <span class="lanc-tipo-chip">${esc(l.lavado)}</span>
       </div>
       <div class="lanc-card-right">
@@ -482,20 +530,33 @@ function renderRelatorio() {
   const totalRecebidoPeriodo = pgtosPeriodo.reduce((s,p)=>s+p.valor,0);
   const totalLancadoPeriodo  = lancsDoPerido.reduce((s,l)=>s+l.qtd*l.valor,0);
   document.getElementById('r-metrics').innerHTML=`
-    <div class="metric"><div class="lbl">Recebido no periodo</div><div class="val success">${esc(fmt(totalRecebidoPeriodo))}</div></div>
-    <div class="metric"><div class="lbl">Lancado no periodo</div><div class="val">${esc(fmt(totalLancadoPeriodo))}</div></div>
-    <div class="metric"><div class="lbl">Pecas lavadas</div><div class="val">${esc(fmtN(totalPecas))}</div></div>`;
+    <div class="metric featured"><div class="lbl">Recebido no periodo</div><div class="val" id="m-rel-recebido"></div></div>
+    <div class="metric"><div class="lbl">Lancado no periodo</div><div class="val" id="m-rel-lancado"></div></div>
+    <div class="metric"><div class="lbl">Pecas lavadas</div><div class="val" id="m-rel-pecas"></div></div>`;
+  renderMetricaAnimada('m-rel-recebido', totalRecebidoPeriodo, fmt);
+  renderMetricaAnimada('m-rel-lancado', totalLancadoPeriodo, fmt);
+  renderMetricaAnimada('m-rel-pecas', totalPecas, fmtN);
   const maxPecas=Math.max(...db.clientes.map(c=>pecasDeCliente(c.id,lancsDoPerido)),1);
   let barras='';
-  db.clientes.forEach(c=>{ const pm=pecasDeCliente(c.id,lancsDoPerido); if (pm===0) return; const pct=Math.round(pm/maxPecas*100); barras+=`<div class="bar-row"><div class="bar-label">${esc(c.nome)}</div><div class="bar-wrap"><div class="bar-fill" style="width:${esc(String(pct))}%"></div></div><div class="bar-value">${esc(fmtN(pm))}</div></div>`; });
+  db.clientes.forEach(c=>{ const pm=pecasDeCliente(c.id,lancsDoPerido); if (pm===0) return; const pct=Math.round(pm/maxPecas*100); barras+=`<div class="bar-row"><div class="bar-label">${esc(c.nome)}</div><div class="bar-wrap"><div class="bar-fill" data-pct="${pct}" style="width:0%"></div></div><div class="bar-value">${esc(fmtN(pm))}</div></div>`; });
   document.getElementById('r-barras').innerHTML=barras||`<p style="padding:18px 16px;color:var(--text-4);font-size:.82rem">Nenhuma peca em ${esc(labelPeriodo)}</p>`;
+  // As barras nascem com width:0 (acima) e so ganham o tamanho real aqui,
+  // depois de montadas no DOM — assim o navegador enxerga a mudanca de
+  // 0% -> valor real e a transicao "width .4s" do CSS de fato anima, em vez
+  // de aparecer com a barra ja pronta.
+  requestAnimationFrame(() => {
+    document.querySelectorAll('#r-barras .bar-fill').forEach(el => {
+      requestAnimationFrame(() => { el.style.width = el.dataset.pct + '%'; });
+    });
+  });
+  const totais = calcularTotaisClientes();
   let rows='';
   db.clientes.forEach(c=>{
     const pm      = pecasDeCliente(c.id, lancsDoPerido);
     const lancado = fatDeCliente(c.id, lancsDoPerido);
     if (lancado===0 && pm===0) return;
     const recebido = pagoDeCliente(c.id, pgtosPeriodo);
-    const ab       = totalAberto(c.id);
+    const ab       = totaisDe(totais, c.id).aberto;
     const abStyle  = ab>0?'color:var(--danger);font-weight:700':'color:var(--success);font-weight:700';
     rows+=`<tr><td><input type="checkbox" class="chk-rel" data-cid="${esc(c.id)}" onchange="updateBulkActions()"></td><td><div class="client-row"><div class="avatar">${esc(initials(c.nome))}</div>${esc(c.nome)}</div></td><td>${esc(fmtN(pm))}</td><td>${esc(fmt(lancado))}</td><td>${esc(fmt(recebido))}</td><td style="${abStyle}">${esc(fmt(ab))}</td><td><button class="btn-quitar" onclick="abrirModal('${esc(c.id)}')">Pgto</button></td></tr>`;
   });
@@ -517,16 +578,36 @@ async function marcarSelecionadosPago() {
 
 /* ===== PENDENTES ===== */
 function renderPendentes() {
-  const pendentes=db.clientes.filter(c=>totalAberto(c.id)>0), totalGeral=pendentes.reduce((s,c)=>s+totalAberto(c.id),0);
+  const totais=calcularTotaisClientes();
+  const pendentes=db.clientes.filter(c=>totaisDe(totais,c.id).aberto>0);
+  let totalGeral=0, totalLancGeral=0, totalPagoGeral=0;
+  db.clientes.forEach(c=>{ const t=totaisDe(totais,c.id); totalLancGeral+=t.lancado; totalPagoGeral+=t.pago; });
+  pendentes.forEach(c=>{ totalGeral+=totaisDe(totais,c.id).aberto; });
   const el=document.getElementById('pendentes-total'); if(el) el.textContent=pendentes.length>0?`${pendentes.length} pendente(s) · ${fmt(totalGeral)}`:'Tudo em dia';
   document.getElementById('pendentes-metrics').innerHTML=`
-    <div class="metric"><div class="lbl">Pendentes</div><div class="val danger">${esc(String(pendentes.length))}</div></div>
-    <div class="metric"><div class="lbl">Total em aberto</div><div class="val danger">${esc(fmt(totalGeral))}</div></div>
-    <div class="metric"><div class="lbl">Total lancado</div><div class="val">${esc(fmt(db.clientes.reduce((s,c)=>s+totalLanc(c.id),0)))}</div></div>
-    <div class="metric"><div class="lbl">Total recebido</div><div class="val success">${esc(fmt(db.clientes.reduce((s,c)=>s+totalPago(c.id),0)))}</div></div>`;
+    <div class="metric"><div class="lbl">Pendentes</div><div class="val danger" id="m-pend-qtd"></div></div>
+    <div class="metric featured tone-danger"><div class="lbl">Total em aberto</div><div class="val" id="m-pend-aberto"></div></div>
+    <div class="metric"><div class="lbl">Total lancado</div><div class="val" id="m-pend-lancado"></div></div>
+    <div class="metric"><div class="lbl">Total recebido</div><div class="val success" id="m-pend-recebido"></div></div>`;
+  renderMetricaAnimada('m-pend-qtd', pendentes.length, fmtN);
+  renderMetricaAnimada('m-pend-aberto', totalGeral, fmt);
+  renderMetricaAnimada('m-pend-lancado', totalLancGeral, fmt);
+  renderMetricaAnimada('m-pend-recebido', totalPagoGeral, fmt);
   let rows='';
   if (pendentes.length===0) { rows='<tr class="empty-row"><td colspan="5" style="color:var(--success);font-weight:600">Nenhuma pendencia</td></tr>'; }
-  else { [...pendentes].sort((a,b)=>totalAberto(b.id)-totalAberto(a.id)).forEach(c=>{ const ab=totalAberto(c.id),ult=db.lancamentos.filter(l=>l.cid===c.id).sort((a,b)=>b.data.localeCompare(a.data))[0]; rows+=`<tr><td><input type="checkbox" class="chk-pend" data-cid="${esc(c.id)}" onchange="updatePendBulk()"></td><td><div class="client-row"><div class="avatar">${esc(initials(c.nome))}</div>${esc(c.nome)}</div></td><td style="color:var(--danger);font-weight:700">${esc(fmt(ab))}</td><td>${ult?esc(formatDate(ult.data)):'-'}</td><td><button class="btn-quitar" onclick="pagarTudo('${esc(c.id)}')">Quitar</button></td></tr>`; }); }
+  else {
+    // agrupa a ultima ficha por cliente numa unica passada, em vez de
+    // filtrar db.lancamentos inteiro pra cada cliente pendente
+    const ultimaFichaPorCliente = new Map();
+    db.lancamentos.forEach(l => {
+      const atual = ultimaFichaPorCliente.get(l.cid);
+      if (!atual || l.data > atual.data) ultimaFichaPorCliente.set(l.cid, l);
+    });
+    [...pendentes].sort((a,b)=>totaisDe(totais,b.id).aberto-totaisDe(totais,a.id).aberto).forEach(c=>{
+      const ab=totaisDe(totais,c.id).aberto, ult=ultimaFichaPorCliente.get(c.id);
+      rows+=`<tr><td><input type="checkbox" class="chk-pend" data-cid="${esc(c.id)}" onchange="updatePendBulk()"></td><td><div class="client-row"><div class="avatar">${esc(initials(c.nome))}</div>${esc(c.nome)}</div></td><td style="color:var(--danger);font-weight:700">${esc(fmt(ab))}</td><td>${ult?esc(formatDate(ult.data)):'-'}</td><td><button class="btn-quitar" onclick="pagarTudo('${esc(c.id)}')">Quitar</button></td></tr>`;
+    });
+  }
   document.getElementById('tbl-pendentes').innerHTML=rows;
   document.getElementById('pend-bulk-actions').style.display='none';
   const a=document.getElementById('chk-pend-all'); if(a)a.checked=false;
@@ -595,10 +676,10 @@ function renderDetalheCliente(cid) {
       + `<div style="margin-top:10px"><button class="btn-primary" style="width:100%;padding:13px" onclick="abrirModalDetalhe()">Registrar pagamento &mdash; ${esc(fmt(ab))}</button></div>`;
   document.getElementById('detalhe-fichas-abertas').innerHTML=htmlAbertas;
   document.getElementById('detalhe-pagamentos').innerHTML=pagamentos.length===0
-    ? '<div class="empty-detalhe">Nenhum pagamento registrado</div>'
+    ? emptyState('Nenhum pagamento registrado', 'Os pagamentos recebidos vao aparecer aqui.')
     : pagamentos.map(p=>`<div class="pgto-card"><div><div class="pgto-card-info">Pagamento registrado</div><div class="pgto-card-data">${esc(formatDate(p.data))}</div></div><div class="pgto-card-valor">+ ${esc(fmt(p.valor))}</div></div>`).join('');
   document.getElementById('detalhe-todas-fichas').innerHTML=fichas.length===0
-    ? '<div class="empty-detalhe">Nenhuma ficha ainda</div>'
+    ? emptyState('Nenhuma ficha ainda', 'As fichas lancadas pra esse cliente vao aparecer aqui.')
     : fichas.map(l=>`<div class="lanc-card">
       <div class="lanc-card-left">
         <div class="lanc-card-peca">${esc(l.peca)}</div>

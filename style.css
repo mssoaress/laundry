@@ -198,6 +198,20 @@ body{
 .metric .val.danger{color:var(--danger)}
 .metric .val.success{color:var(--success)}
 
+/* O card "featured" carrega o numero mais importante da tela (ex.: faturamento
+   no dashboard, total em aberto em pendentes) — hierarquia visual em vez de
+   4 caixas com o mesmo peso. */
+.metric.featured{
+  grid-column:1 / -1;
+  background:linear-gradient(135deg,var(--blue-600),var(--blue-400));
+  border:none;
+}
+.metric.featured::after{display:none}
+.metric.featured .lbl{color:rgba(255,255,255,.75)}
+.metric.featured .val{color:#fff;font-size:1.65rem}
+.metric.featured .val.danger,.metric.featured .val.success{color:#fff}
+.metric.featured.tone-danger{background:linear-gradient(135deg,#b71c1c,#e57373)}
+
 /* ===== SECTION LABEL ===== */
 .section-label{
   font-size:.66rem;font-weight:700;
@@ -244,7 +258,8 @@ tr:last-child td{border-bottom:none}
 .client-row{display:flex;align-items:center;gap:10px}
 
 /* ===== BADGES ===== */
-.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:.65rem;font-weight:700;letter-spacing:.02em}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:.65rem;font-weight:700;letter-spacing:.02em}
+.badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0}
 .badge-green{background:var(--success-bg);color:var(--success);border:1px solid var(--success-border)}
 .badge-amber{background:var(--warning-bg);color:var(--warning);border:1px solid var(--warning-border)}
 .badge-red{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border)}
@@ -521,6 +536,12 @@ tr:last-child td{border-bottom:none}
 .pgto-card-data{font-size:.68rem;color:var(--text-3)}
 .pgto-card-valor{font-weight:700;font-size:.9rem;color:var(--success)}
 .empty-detalhe{text-align:center;padding:1.8rem;color:var(--text-4);font-size:.82rem}
+
+/* ===== EMPTY STATE (listas em cartao) ===== */
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:52px 24px}
+.empty-state svg{width:38px;height:38px;color:var(--border-s);margin-bottom:14px}
+.empty-state-title{font-size:.85rem;font-weight:600;color:var(--text-3);margin-bottom:4px}
+.empty-state-sub{font-size:.76rem;color:var(--text-4);max-width:240px}
 
 input[type="checkbox"]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer}
 
