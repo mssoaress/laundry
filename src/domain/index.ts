@@ -1,5 +1,12 @@
+import type {
+  Ficha,
+  Payment,
+  FichaInput,
+  FichaItem,
+  Allocation,
+} from "../types";
 // Regras financeiras independentes da interface e do Firebase. Valores internos em centavos.
-export function cents(value) {
+export function cents(value: number | string) {
   const number = Number(value);
   if (!Number.isFinite(number)) throw new Error("Valor monetário inválido.");
   const result = Math.round(
@@ -9,7 +16,7 @@ export function cents(value) {
     throw new Error("Valor monetário fora do limite.");
   return result;
 }
-export function moneyInput(value, { positive = false } = {}) {
+export function moneyInput(value: number | string, { positive = false } = {}) {
   const text = String(value).trim().replace(",", ".");
   if (!/^\d+(?:\.\d{1,2})?$/.test(text))
     throw new Error("Informe um valor válido, com até duas casas decimais.");
@@ -21,12 +28,12 @@ export function moneyInput(value, { positive = false } = {}) {
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
-export function validDate(value) {
+export function validDate(value: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T12:00:00`);
   return !Number.isNaN(date.getTime()) && localDate(date) === value;
 }
-export function validateFicha({ peca, data, qtd, valor, lavado }) {
+export function validateFicha({ peca, data, qtd, valor, lavado }: FichaInput) {
   if (!String(peca || "").trim()) throw new Error("Informe a peça.");
   if (!validDate(data)) throw new Error("Informe uma data válida.");
   if (!Number.isSafeInteger(Number(qtd)) || Number(qtd) <= 0)
@@ -43,24 +50,34 @@ export function validateFicha({ peca, data, qtd, valor, lavado }) {
     lavado,
   };
 }
-export function fichaCents(ficha) {
+export function fichaCents(ficha: Ficha) {
   return cents(ficha.valor) * Number(ficha.qtd);
 }
-export function paymentCents(payment) {
+export function paymentCents(payment: Payment) {
   return payment.estornado ? 0 : cents(payment.valor);
 }
-export function byDate(a, b) {
+export function byDate(
+  a: { data: string; id: string },
+  b: { data: string; id: string },
+) {
   return (
     String(a.data).localeCompare(String(b.data)) ||
     String(a.id).localeCompare(String(b.id))
   );
 }
-export function statement(fichas, pagamentos) {
+export function statement(fichas: Ficha[], pagamentos: Payment[]) {
   const ordered = [...fichas].filter((f) => !f.cancelada).sort(byDate);
-  const items = new Map(
+  const items = new Map<string, FichaItem>(
     ordered.map((f) => [
       f.id,
-      { ...f, total: fichaCents(f), paid: 0, due: fichaCents(f) },
+      {
+        ...f,
+        total: fichaCents(f),
+        paid: 0,
+        due: fichaCents(f),
+        settled: false,
+        status: "Não paga",
+      },
     ]),
   );
   let available = 0,
@@ -104,12 +121,16 @@ export function statement(fichas, pagamentos) {
   };
 }
 // A migração é manual: dinheiro antigo só é vinculado quando o usuário marca a ficha.
-export function markPaidPlan(fichas, pagamentos, ids) {
+export function markPaidPlan(
+  fichas: Ficha[],
+  pagamentos: Payment[],
+  ids: string[],
+) {
   const account = statement(fichas, pagamentos);
   const targets = [...account.items.values()].filter(
     (f) => ids.includes(f.id) && !f.settled,
   );
-  const updates = new Map();
+  const updates = new Map<string, Payment>();
   const usable = pagamentos
     .filter((p) => !p.estornado)
     .sort(byDate)
@@ -124,7 +145,7 @@ export function markPaidPlan(fichas, pagamentos, ids) {
     }));
   let newAmount = 0,
     reused = 0;
-  const allocations = [];
+  const allocations: Allocation[] = [];
   for (const item of targets) {
     let due = item.due;
     for (const payment of usable) {
@@ -135,7 +156,7 @@ export function markPaidPlan(fichas, pagamentos, ids) {
       due -= used;
       reused += used;
       updates.set(payment.id, {
-        ...pagamentos.find((p) => p.id === payment.id),
+        ...payment,
         alocacoes: payment.alocacoes,
       });
     }
@@ -152,7 +173,11 @@ export function markPaidPlan(fichas, pagamentos, ids) {
     allocations,
   };
 }
-export function noteItems(fichas, pagamentos, ids = null) {
+export function noteItems(
+  fichas: Ficha[],
+  pagamentos: Payment[],
+  ids: string[] | null = null,
+) {
   return [...statement(fichas, pagamentos).items.values()].filter(
     (f) => !f.settled && f.due > 0 && (!ids || ids.includes(f.id)),
   );
@@ -174,19 +199,33 @@ export function weekRange(date = new Date()) {
   });
   return { ini: days[0], fim: days[6], days };
 }
-export function weeklySummary(fichas, pagamentos, date = new Date()) {
+export function weeklySummary(
+  fichas: Ficha[],
+  pagamentos: Payment[],
+  date = new Date(),
+) {
   const range = weekRange(date);
-  const within = (item) => item.data >= range.ini && item.data <= range.fim;
+  const within = (item: { data: string }) =>
+    item.data >= range.ini && item.data <= range.fim;
   const entries = fichas.filter((f) => !f.cancelada && within(f));
   const payments = pagamentos.filter((p) => !p.estornado && within(p));
-  const clients = new Map();
+  const clients = new Map<
+    string,
+    {
+      cid: string;
+      count: number;
+      pieces: number;
+      launched: number;
+      received: number;
+    }
+  >();
   const days = new Map(
     range.days.map((data) => [data, { data, launched: 0, received: 0 }]),
   );
-  const row = (cid) => {
+  const row = (cid: string) => {
     if (!clients.has(cid))
       clients.set(cid, { cid, count: 0, pieces: 0, launched: 0, received: 0 });
-    return clients.get(cid);
+    return clients.get(cid)!;
   };
   for (const f of entries) {
     const value = fichaCents(f),
@@ -194,12 +233,12 @@ export function weeklySummary(fichas, pagamentos, date = new Date()) {
     client.count++;
     client.pieces += Number(f.qtd);
     client.launched += value;
-    days.get(f.data).launched += value;
+    days.get(f.data)!.launched += value;
   }
   for (const p of payments) {
     const value = paymentCents(p);
     row(p.cid).received += value;
-    days.get(p.data).received += value;
+    days.get(p.data)!.received += value;
   }
   return {
     range,

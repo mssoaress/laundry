@@ -1,11 +1,11 @@
+import { stripTypeScriptTypes } from "node:module";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { markPaidPlan } from "../domain.js";
+import { markPaidPlan } from "../src/domain/index.ts";
 // Exercita o adaptador real com o protocolo transacional substituído em memória.
-const source = readFileSync(
-  new URL("../repository.js", import.meta.url),
-  "utf8",
+const source = stripTypeScriptTypes(
+  readFileSync(new URL("../src/data/repository.ts", import.meta.url), "utf8"),
 )
   .replace(/import[\s\S]*?from\s+["'][^"']+["'];/g, "")
   .replace(/export /g, "");

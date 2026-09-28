@@ -6,7 +6,7 @@ import {
   localDate,
   validDate,
   validateFicha,
-} from "../domain.js";
+} from "../src/domain/index.ts";
 test("dinheiro é convertido em centavos exatos", () => {
   assert.equal(cents(0.1) * 3, cents(0.3));
   assert.equal(moneyInput("3,30"), 330);
@@ -35,7 +35,7 @@ test("data local não muda à noite", () => {
   process.env.TZ = "America/Fortaleza";
   assert.equal(localDate(new Date("2026-09-24T22:30:00-03:00")), "2026-09-24");
 });
-import { statement, markPaidPlan, noteItems } from "../domain.js";
+import { statement, markPaidPlan, noteItems } from "../src/domain/index.ts";
 const fichas = [
   { id: "f1", qtd: 1, valor: 100, data: "2026-01-01" },
   { id: "f2", qtd: 1, valor: 100, data: "2026-02-01" },
@@ -81,7 +81,7 @@ test("pagamento estornado reabre a cobrança; nota desconta recebimento parcial 
   assert.equal(noteItems(updated, payments)[0].due, 4000);
 });
 
-import { weekRange, weeklySummary } from "../domain.js";
+import { weekRange, weeklySummary } from "../src/domain/index.ts";
 test("semana local começa segunda e termina domingo, inclusive na virada do ano", () => {
   assert.deepEqual(weekRange(new Date(2026, 8, 27, 22)).days, [
     "2026-09-21",

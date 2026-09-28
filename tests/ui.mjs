@@ -1,5 +1,9 @@
 import assert from "node:assert/strict";
-import { mkdir } from "node:fs/promises";
+import { mkdir, readdir } from "node:fs/promises";
+const production = process.env.TEST_BUILD === "1";
+const noteModule = production
+  ? `/assets/${(await readdir("dist/assets")).find((name) => /^note-.*\.js$/.test(name))}`
+  : "/src/services/note.ts";
 const { chromium } = await import(
   process.env.PLAYWRIGHT_MODULE || "playwright"
 );
@@ -18,7 +22,7 @@ const emit=()=>Object.keys(handlers).forEach(col=>handlers[col](structuredClone(
 window.__emit=emit;
 export const newId=()=>crypto.randomUUID();
 export function subscribe(col,next,error){handlers[col]=next;queueMicrotask(()=>next(structuredClone(state[col]),{fromCache:false}));return ()=>delete handlers[col];}
-export async function createClient(data){state.clientes.push({...data,id:newId()});emit();}
+export async function createClient(data,id=newId()){if(!state.clientes.some(c=>c.id===id)){state.clientes.push({...data,id});emit();}if(window.__failAfterCommit){window.__failAfterCommit=false;throw new Error("Resposta interrompida após gravar");}}
 export async function changeAccount(cid,operation){const task=queue.then(async()=>{await new Promise(r=>setTimeout(r,30));const mutations=operation({client:structuredClone(state.clientes.find(c=>c.id===cid)),fichas:structuredClone(state.lancamentos.filter(f=>f.cid===cid)),pagamentos:structuredClone(state.pagamentos.filter(p=>p.cid===cid))});for(const m of mutations||[]){let row=state[m.col].find(r=>r.id===m.id);if(row)Object.assign(row,m.data);else state[m.col].push({id:m.id,...m.data});}if(mutations?.length)emit();if(window.__failAfterCommit){window.__failAfterCommit=false;throw new Error('Resposta interrompida após gravar');}});queue=task.catch(()=>{});return task;}
 export async function saveService(data,id=newId()){const old=state.lavados.find(s=>s.id===id);if(old)Object.assign(old,data);else state.lavados.push({...data,id});emit();}
 `;
@@ -28,7 +32,10 @@ await context.route("**/*", async (route) => {
     await route.abort();
     return;
   }
-  if (url.pathname === "/repository.js") {
+  if (
+    url.pathname === "/src/data/repository.ts" ||
+    /^\/assets\/repository-.*\.js$/.test(url.pathname)
+  ) {
     await route.fulfill({
       contentType: "application/javascript",
       body: fixture,
@@ -43,7 +50,11 @@ page.on("pageerror", (e) => errors.push(e.message));
 page.on("dialog", (dialog) => {
   dialogs.push(dialog.message());
   return dialog.accept(
-    dialog.type() === "prompt" ? "Teste de estorno" : undefined,
+    dialog.type() === "prompt"
+      ? dialog.message().startsWith("Novo valor")
+        ? "12.50"
+        : "Teste de estorno"
+      : undefined,
   );
 });
 async function clickMenu(selector) {
@@ -53,7 +64,7 @@ async function clickMenu(selector) {
 }
 await page.clock.setFixedTime(new Date("2026-09-27T12:00:00-03:00"));
 try {
-  await page.goto(process.env.BASE_URL || "http://127.0.0.1:5501");
+  await page.goto(process.env.BASE_URL || "http://127.0.0.1:5503");
   await page.locator("#loading-overlay").waitFor({ state: "hidden" });
   assert.match(
     await page.locator("#dash-date").innerText(),
@@ -354,16 +365,11 @@ try {
   );
   await editClient.locator("xpath=ancestor::details[1]/summary").click();
   await page.evaluate(() => {
-    document.querySelector(
-      '#client-list [data-action="editClient"][data-id="c1"]',
-    ).dataset.beforeRefresh = "true";
+    window.__state.clientes.find((c) => c.id === "c1").tel = "83988887777";
     window.__emit();
   });
-  await page.waitForFunction(
-    () =>
-      !document.querySelector(
-        '#client-list [data-action="editClient"][data-id="c1"]',
-      ).dataset.beforeRefresh,
+  await page.waitForFunction(() =>
+    document.querySelector("#client-list").textContent.includes("83988887777"),
   );
   assert.equal(
     await editClient.isVisible(),
@@ -411,6 +417,81 @@ try {
   assert.match(
     await page.locator("#tbl-relatorio").innerText(),
     /Recebimento sem ficha/,
+  );
+  // Cadastro de cliente com resposta perdida, edição preservada em tempo real e catálogo.
+  await page.locator('.bottom-nav [data-page="clientes"]').click();
+  await page.getByRole("button", { name: "Novo cliente", exact: true }).click();
+  await page.locator("#c-nome").fill("Cliente novo");
+  await page.locator("#c-tel").fill("83922223333");
+  await page.evaluate(() => (window.__failAfterCommit = true));
+  await page
+    .getByRole("button", { name: "Salvar cliente", exact: true })
+    .click();
+  await page.waitForFunction(() =>
+    document
+      .querySelector("#app-message")
+      .textContent.includes("Resposta interrompida"),
+  );
+  await page
+    .getByRole("button", { name: "Salvar cliente", exact: true })
+    .click();
+  await page.locator("#form-cliente").waitFor({ state: "hidden" });
+  assert.equal(
+    await page.evaluate(
+      () =>
+        window.__state.clientes.filter((c) => c.nome === "Cliente novo").length,
+    ),
+    1,
+  );
+  await clickMenu('#client-list [data-action="editClient"][data-id="c1"]');
+  await page.locator("#edit-client-name").fill("Edição ainda não salva");
+  await page.evaluate(() => window.__emit());
+  assert.equal(
+    await page.locator("#edit-client-name").inputValue(),
+    "Edição ainda não salva",
+  );
+  await page.keyboard.press("Escape");
+  await page.locator("#client-edit-bg").waitFor({ state: "hidden" });
+  assert.equal(
+    await page.evaluate(
+      () => window.__state.clientes.find((c) => c.id === "c1").nome,
+    ),
+    "Cliente atualizado",
+  );
+  await page.locator('.bottom-nav [data-page="lavados"]').click();
+  await page.getByRole("button", { name: "Novo lavado", exact: true }).click();
+  await page.locator("#lv-nome").fill("Lavado novo");
+  await page.locator("#lv-valor").fill("4.25");
+  await page
+    .getByRole("button", { name: "Salvar lavado", exact: true })
+    .click();
+  await page.locator("#form-lavado").waitFor({ state: "hidden" });
+  const serviceId = await page.evaluate(
+    () => window.__state.lavados.find((s) => s.nome === "Lavado novo").id,
+  );
+  await page
+    .locator(`[data-action="archiveService"][data-id="${serviceId}"]`)
+    .click();
+  await page.waitForFunction(
+    (id) => window.__state.lavados.find((s) => s.id === id).arquivado === true,
+    serviceId,
+  );
+  await page
+    .locator(`[data-action="archiveService"][data-id="${serviceId}"]`)
+    .click();
+  await page.waitForFunction(
+    (id) => window.__state.lavados.find((s) => s.id === id).arquivado === false,
+    serviceId,
+  );
+  await page.locator('[data-action="editService"][data-id="s1"]').click();
+  await page.waitForFunction(
+    () => window.__state.lavados.find((s) => s.id === "s1").valor === 12.5,
+  );
+  assert.equal(
+    await page.evaluate(
+      () => window.__state.lancamentos.find((f) => f.id === "f1").valor,
+    ),
+    10,
   );
   // Dados demonstrativos somente na memória do teste para revisão visual de todas as telas.
   await page.evaluate(() => {
@@ -575,8 +656,8 @@ try {
   }
   assert.deepEqual(errors, []);
   // Conferência da impressão com nomes longos, pagamento parcial e várias páginas.
-  const noteHtml = await page.evaluate(async () => {
-    const { renderNote } = await import("/note.js");
+  const noteHtml = await page.evaluate(async (modulePath) => {
+    const { renderNote } = await import(modulePath);
     const items = Array.from({ length: 6 }, (_, i) => ({
       peca:
         i === 0 ? "Calças & conjuntos <especial>" : `Blusas modelo ${i + 1}`,
@@ -595,7 +676,7 @@ try {
       logo: new URL("/img/logo-nova-lavanderia.png", location.href).href,
       date: "2026-09-27",
     });
-  });
+  }, noteModule);
   const printed = await context.newPage();
   await printed.setContent(noteHtml);
   await printed.waitForFunction(() =>
@@ -612,8 +693,8 @@ try {
     preferCSSPageSize: true,
     printBackground: true,
   });
-  const longHtml = await page.evaluate(async () => {
-    const { renderNote } = await import("/note.js");
+  const longHtml = await page.evaluate(async (modulePath) => {
+    const { renderNote } = await import(modulePath);
     const items = Array.from({ length: 60 }, (_, i) => ({
       ...window.__noteItems[i % 6],
       peca: `Ficha ${i + 1} - Conjunto de peças com descrição extensa para conferir a impressão`,
@@ -626,7 +707,7 @@ try {
       logo: new URL("/img/logo-nova-lavanderia.png", location.href).href,
       date: "2026-09-27",
     });
-  });
+  }, noteModule);
   await printed.setContent(longHtml);
   await printed.waitForFunction(() =>
     [...document.images].every((img) => img.complete && img.naturalWidth > 0),

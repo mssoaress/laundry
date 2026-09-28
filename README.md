@@ -1,27 +1,45 @@
 # Lavanderia Emanoel
 
-Aplicação estática para clientes, fichas, recebimentos, relatórios e notas. A interface usa JavaScript, HTML e CSS, com persistência no Cloud Firestore.
+Aplicação React + TypeScript + Vite para clientes, fichas, recebimentos, relatórios e notas. Os dados continuam no mesmo projeto Cloud Firestore. A migração não exige conversão, exclusão ou importação das coleções existentes.
 
 ## Executar e verificar
 
-Requisitos: Node.js 20 ou superior, npm; Python 3 para o servidor local. O aplicativo depende de conexão com o Firebase e deve ser aberto por HTTP local ou HTTPS.
+Requisitos: Node.js 22.18 ou superior e npm. O aplicativo depende de conexão com o Firebase e deve ser aberto por HTTP local ou HTTPS.
 
 ```sh
 npm ci
-npm run check
-npm test
-npm start
+npm run dev
 ```
 
-Abra http://localhost:5501. Essa execução normal utiliza o projeto Firebase configurado em `repository.js`: não cadastre dados fictícios nela.
+Abra http://127.0.0.1:5503. `npm start` também inicia o Vite. O servidor antigo do Live Server/Python não compila TypeScript: use o Vite durante o desenvolvimento. A execução normal utiliza o Firebase configurado em `src/data/repository.ts`: não cadastre dados fictícios nela.
 
-Para testar a interface **sem acessar o banco real**, com o servidor iniciado:
+```sh
+npm run check          # TypeScript em modo estrito
+npm test               # Regras financeiras e concorrência
+npm run format:check   # Formatação
+npm run build          # Gera a pasta dist para publicação
+npm run preview        # Prévia do pacote compilado em http://127.0.0.1:5504
+```
+
+Para testar a interface **sem acessar o banco real**, com `npm run dev` iniciado:
 
 ```sh
 npm run test:ui
+npm run test:access
 ```
 
-O teste usa o Google Chrome instalado, intercepta o adaptador de persistência e bloqueia solicitações externas. Capturas ficam em `tests/artifacts/` e não são versionadas.
+Para repetir os fluxos no pacote compilado, execute `npm run build`, inicie `npm run preview` em outro terminal e rode:
+
+```sh
+npm run test:ui:production
+BASE_URL=http://127.0.0.1:5504 npm run test:access
+```
+
+Os testes usam o Google Chrome instalado, substituem o adaptador de persistência por um simulador e bloqueiam solicitações externas. A substituição existe apenas no processo de testes, sem conta de demonstração nem desvio de autenticação no código de produção. Capturas e PDFs ficam em `tests/artifacts/` e não são versionados. A verificação cobre também cadastro após resposta perdida, formulários durante sincronização, preços históricos, notas e navegação em 320, 390, 768 e 1440 pixels.
+
+## Organização da migração
+
+Todas as telas e formulários são componentes React. Estado, filtros, seleção e modais são controlados pela aplicação, sem funções globais em `window` ou substituição das telas por `innerHTML`. As assinaturas do Firebase são encerradas ao desmontar ou reconectar. As operações financeiras mantêm transações e identificadores de repetição, separados da interface. O HTML independente da nota permanece gerado por um módulo TypeScript próprio para preservar o desenho A5 na impressão.
 
 ## Quitação manual das fichas antigas
 
@@ -58,12 +76,18 @@ O relatório inclui recebimentos mesmo sem fichas no período, e o seletor de an
 
 ## Estrutura e dados
 
-- `app.js`: interface, navegação, comandos, relatórios e notas.
-- `note.js`: documento de impressão A5, com estilo independente da interface.
-- `domain.js`: cálculos em centavos, validações, vínculo de pagamentos e regras da nota.
-- `repository.js`: Firebase, consultas e operações transacionais.
-- `index.html`, `style.css`, `img/`: estrutura e apresentação.
-- `tests/`: testes de domínio, concorrência do adaptador e fluxos no navegador.
+- `src/App.tsx` e `src/main.tsx`: inicialização, acesso, navegação e estrutura.
+- `src/pages/`: painel, clientes, detalhe, fichas, relatórios, pendências e lavados.
+- `src/components/`: formulários, modais, cartões e controles reutilizáveis.
+- `src/hooks/useApp.tsx`: estado compartilhado, sincronização e controle de operações.
+- `src/domain/index.ts`: cálculos em centavos, validações e vínculo de pagamentos.
+- `src/services/operations.ts`: cadastro, edição, quitação, cancelamento e estorno.
+- `src/services/note.ts` e `src/services/print.ts`: nota A5 e impressão.
+- `src/data/repository.ts`: SDK npm do Firebase e protocolo transacional.
+- `src/types.ts`: modelos de clientes, fichas, recebimentos e serviços.
+- `src/styles.css`, `public/img/`: paleta azul, estilos responsivos e imagens.
+- `tests/`: testes financeiros, concorrência, interface e acesso local.
+- `dist/`: pacote gerado pelo Vite; não editar nem versionar.
 
 Coleções existentes mantidas:
 
@@ -78,7 +102,7 @@ Cada escrita financeira relê a conta no servidor e participa da revisão transa
 
 ## Publicação e limites conhecidos
 
-A pasta pode ser servida como site estático. `vercel.json` define cabeçalhos básicos e revalidação de cache. Esta alteração não publica automaticamente o site.
+Execute `npm run build` e publique o conteúdo de `dist/`. `vercel.json` está configurado para Vite, com build, diretório de saída, cabeçalhos básicos e revalidação de cache. A raiz do código-fonte não deve ser publicada como a antiga aplicação estática. Esta alteração não publica automaticamente o site.
 
 Após publicar, recarregue o aplicativo em **todos os dispositivos**. Versões antigas não participam do protocolo de revisão e não devem continuar gravando em paralelo.
 

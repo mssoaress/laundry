@@ -3,15 +3,35 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/*.test.js",
-    "check": "node --check app.js && node --check domain.js && node --check repository.js && node --check note.js",
-    "start": "python3 -m http.server 5501",
+    "dev": "vite --host 127.0.0.1",
+    "start": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.js",
     "test:ui": "node tests/ui.mjs",
-    "format": "prettier --write app.js domain.js repository.js note.js index.html style.css tests/*.js tests/*.mjs",
-    "format:check": "prettier --check app.js domain.js repository.js note.js index.html style.css tests/*.js tests/*.mjs"
+    "format": "prettier --write src tests vite.config.ts tsconfig.json index.html package.json vercel.json",
+    "format:check": "prettier --check src tests vite.config.ts tsconfig.json index.html package.json vercel.json",
+    "test:ui:production": "TEST_BUILD=1 BASE_URL=http://127.0.0.1:5504 node tests/ui.mjs",
+    "test:access": "node tests/access.mjs"
   },
   "devDependencies": {
+    "@types/node": "26.6.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
     "playwright": "1.62.1",
-    "prettier": "3.6.2"
+    "prettier": "3.6.2",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.1"
+  },
+  "dependencies": {
+    "firebase": "12.19.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "engines": {
+    "node": ">=22.18.0"
   }
 }

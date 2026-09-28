@@ -1,20 +1,37 @@
-import { cents } from "./domain.js";
+import type { Client, FichaItem } from "../types";
+import { cents } from "../domain";
 
-const escapeHtml = (value) =>
+const escapeHtml = (value: unknown) =>
   String(value ?? "").replace(
     /[&<>"']/g,
     (char) =>
-      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
-        char
-      ],
+      (
+        ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;",
+        }) as Record<string, string>
+      )[char],
   );
-const money = (value) =>
+const money = (value: number) =>
   (value / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const dateLabel = (value) => value.split("-").reverse().join("/");
+const dateLabel = (value: string) => value.split("-").reverse().join("/");
 const whatsappIcon = `<svg class="whatsapp-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.5 3.5A11.9 11.9 0 0 0 12 0C5.4 0 0 5.4 0 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.8 1 3.8 1.5 5.8 1.5h.1c6.6 0 11.9-5.4 11.9-12a12 12 0 0 0-3.5-8.4ZM12 21.9c-1.8 0-3.6-.5-5.1-1.4l-.4-.2-3.7 1 1-3.6-.3-.4A9.9 9.9 0 1 1 12 21.9Zm5.5-7.4c-.3-.1-1.8-.9-2.1-1s-.5-.1-.7.2-.8 1-1 1.2-.3.2-.6.1a8.1 8.1 0 0 1-4-3.5c-.3-.5.3-.5.9-1.7.1-.2 0-.4 0-.6l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.3 5.2 4.6 1.9.8 2.7.9 3.7.7.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4s-.4-.2-.7-.4Z"/></svg>`;
 
 // Documento independente: a nota mantém o mesmo desenho no navegador e no PDF.
-export function renderNote({ client, items, logo, date }) {
+export function renderNote({
+  client,
+  items,
+  logo,
+  date,
+}: {
+  client: Client;
+  items: FichaItem[];
+  logo: string;
+  date: string;
+}) {
   const subtotal = items.reduce((sum, item) => sum + item.total, 0);
   const paid = items.reduce((sum, item) => sum + item.paid, 0);
   const total = items.reduce((sum, item) => sum + item.due, 0);

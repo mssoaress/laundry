@@ -3,3 +3,7 @@ node_modules/
 tests/artifacts/
 .env*
 !.env.example
+dist/
+tmp/
+output/
+*.tsbuildinfo
