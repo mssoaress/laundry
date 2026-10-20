@@ -76,7 +76,7 @@ export function Reports() {
         <div className="filtro-tabs">
           {[
             ["mensal", "Mensal"],
-            ["semanal", "Semanal"],
+            ["semanal", "Por período"],
             ["todos", "Todo o histórico"],
           ].map(([p, label]) => (
             <button
@@ -287,13 +287,14 @@ export function Reports() {
           onClick={() => {
             void run("settleReport", async () => {
               if (!range) throw new Error("Selecione um período válido.");
-              await operations.markGroups(
+              const done = await operations.markGroups(
                 [...selected].map((cid) => ({
                   cid,
                   ids: fichas.filter((f) => f.cid === cid).map((f) => f.id),
                 })),
+                { confirmTotal: true },
               );
-              clear();
+              if (done) clear();
             });
           }}
         >

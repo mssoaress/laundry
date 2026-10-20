@@ -7,10 +7,12 @@ export function Services() {
   const { db, operations, run, busy } = useApp(),
     [creating, setCreating] = useState(false),
     [name, setName] = useState(""),
-    [value, setValue] = useState(""),
-    usages = new Map<string, number>();
-  for (const f of db.lancamentos.filter((f) => !f.cancelada))
-    usages.set(f.lavado, (usages.get(f.lavado) || 0) + 1);
+    [value, setValue] = useState("");
+  const active = db.lancamentos.filter((f) => !f.cancelada);
+  // Fichas antigas sem lavadoId são reconhecidas pelo nome.
+  const usages = (id: string, nome: string) =>
+    active.filter((f) => (f.lavadoId ? f.lavadoId === id : f.lavado === nome))
+      .length;
   const services = [...db.lavados].sort((a, b) => a.nome.localeCompare(b.nome));
   return (
     <>
@@ -94,7 +96,7 @@ export function Services() {
                       {s.arquivado ? " (arquivado)" : ""}
                     </td>
                     <td>{fmtC(cents(s.valor))}</td>
-                    <td>{usages.get(s.nome) || 0}</td>
+                    <td>{usages(s.id, s.nome)}</td>
                     <td>
                       <Action
                         name="editService"

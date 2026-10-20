@@ -1,0 +1,19 @@
+rules_version = '2';
+// Somente usuários autenticados cadastrados em `admins/{uid}` acessam os dados.
+// O documento de cada administrador é criado manualmente no console do Firebase.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+    match /{collection}/{id} {
+      allow read, write: if isAdmin() &&
+        collection in ['clientes', 'lancamentos', 'pagamentos', 'lavados'];
+    }
+  }
+}

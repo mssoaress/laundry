@@ -35,7 +35,20 @@ npm run test:ui:production
 BASE_URL=http://127.0.0.1:5504 npm run test:access
 ```
 
-Os testes usam o Google Chrome instalado, substituem o adaptador de persistência por um simulador e bloqueiam solicitações externas. A substituição existe apenas no processo de testes, sem conta de demonstração nem desvio de autenticação no código de produção. Capturas e PDFs ficam em `tests/artifacts/` e não são versionados. A verificação cobre também cadastro após resposta perdida, formulários durante sincronização, preços históricos, notas e navegação em 320, 390, 768 e 1440 pixels.
+Os testes usam o Google Chrome instalado, substituem os adaptadores de persistência e de autenticação por simuladores e bloqueiam solicitações externas. A substituição existe apenas no processo de testes, sem conta de demonstração nem desvio de autenticação no código de produção. Capturas e PDFs ficam em `tests/artifacts/` e não são versionados. A verificação cobre também cadastro após resposta perdida, formulários durante sincronização, preços históricos, notas e navegação em 320, 390, 768 e 1440 pixels.
+
+## Acesso e regras do Firestore
+
+O acesso usa **Firebase Authentication** (e-mail e senha). A antiga senha local foi removida: ela ficava no código publicado e não protegia o banco. As regras em `firestore.rules` liberam leitura e escrita apenas para usuários autenticados que tenham um documento em `admins/{uid}`.
+
+Configuração única no [console do Firebase](https://console.firebase.google.com/project/lavanderia-emanoel):
+
+1. **Authentication → Método de login:** ative **E-mail/senha**.
+2. **Authentication → Usuários → Adicionar usuário:** cadastre o e-mail e a senha de cada pessoa que usa o painel. Copie o **UID** gerado.
+3. **Firestore → Dados → Iniciar coleção** `admins`: crie um documento cujo ID seja o UID copiado (os campos podem ficar vazios, por exemplo `nome: "Emanoel"`).
+4. **Firestore → Regras:** cole o conteúdo de `firestore.rules` e publique. Alternativa com a CLI: `npx firebase-tools deploy --only firestore:rules`.
+
+Faça os passos 1 a 3 antes de publicar as regras, para não perder o acesso. Para remover alguém, desative o usuário em Authentication e apague o documento em `admins`. O botão **Sair** fica no menu de três pontos do topo.
 
 ## Organização da migração
 
@@ -52,6 +65,8 @@ No detalhe do cliente, **Marcar como paga** realiza uma operação atômica:
 3. Registra somente a diferença, quando houver, vincula os valores e marca a ficha com um clique, sem confirmação adicional.
 
 Exemplo: cliente com duas fichas de R$ 100 e R$ 200, e pagamento antigo de R$ 150. Todas começam não pagas. Marcar a primeira usa R$ 100 já recebidos, sem criar receita. Marcar a segunda usa os R$ 50 restantes e registra R$ 150 novos. O total recebido passa a R$ 300, e não a R$ 450.
+
+A quitação de todas as fichas de um cliente (**Quitar** em Pendências) e as quitações em lote pedem confirmação com o total que será registrado.
 
 **Marque como paga quando a diferença tiver sido recebida.** Para receber apenas parte, use Registrar pagamento e informe o valor e a data. Depois, marque a ficha quando ela tiver sido quitada.
 
@@ -84,6 +99,8 @@ O relatório inclui recebimentos mesmo sem fichas no período, e o seletor de an
 - `src/services/operations.ts`: cadastro, edição, quitação, cancelamento e estorno.
 - `src/services/note.ts` e `src/services/print.ts`: nota A5 e impressão.
 - `src/data/repository.ts`: SDK npm do Firebase e protocolo transacional.
+- `src/data/auth.ts`: login, sessão e saída pelo Firebase Authentication.
+- `firestore.rules`, `firebase.json`: regras de acesso do Firestore.
 - `src/types.ts`: modelos de clientes, fichas, recebimentos e serviços.
 - `src/styles.css`, `public/img/`: paleta azul, estilos responsivos e imagens.
 - `tests/`: testes financeiros, concorrência, interface e acesso local.
@@ -106,7 +123,9 @@ Execute `npm run build` e publique o conteúdo de `dist/`. `vercel.json` está c
 
 Após publicar, recarregue o aplicativo em **todos os dispositivos**. Versões antigas não participam do protocolo de revisão e não devem continuar gravando em paralelo.
 
-A autenticação local por senha foi mantida a pedido do proprietário. Ela **não é autorização no servidor**. Firebase Authentication, usuários autorizados, regras de leitura/escrita e validação no Firestore continuam sendo a etapa de segurança a executar depois. Não há mudança automática nas regras implantadas.
+A autorização depende das regras de `firestore.rules`, que **não são publicadas automaticamente** pelo Vercel: siga a seção "Acesso e regras do Firestore". Até as regras serem publicadas, o login protege apenas a interface.
+
+O `npm audit` aponta o `@grpc/grpc-js` fixado pelo próprio `@firebase/firestore` (inclusive na versão mais recente). Esse pacote só é usado no Node.js e não entra no pacote do navegador; a sugestão de `npm audit fix --force` rebaixaria o Firebase para a versão 9 e não deve ser aplicada.
 
 Os testes não consultam nem modificam o Firebase de produção. Os testes de concorrência verificam o adaptador com uma implementação transacional em memória, não um emulador Firebase. Confirme as regras implantadas e compatibilidade das transações em ambiente de homologação antes da publicação.
 

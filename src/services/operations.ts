@@ -54,12 +54,13 @@ export function createOperations(
   commandId: (key: string, signature: string) => string,
   notify: (message: string, error?: boolean) => void,
 ) {
-  const account = (cid: string) =>
-    buildAccounts(getDb()).get(cid) ?? {
-      ...statement([], []),
-      fichas: [],
-      pagamentos: [],
-    };
+  // Calcula apenas a conta pedida, sem reconstruir as contas de todos os clientes.
+  const account = (cid: string) => {
+    const db = getDb(),
+      fichas = db.lancamentos.filter((f) => f.cid === cid),
+      pagamentos = db.pagamentos.filter((p) => p.cid === cid);
+    return { ...statement(fichas, pagamentos), fichas, pagamentos };
+  };
   return {
     async saveClient(nome: string, tel: string, original?: Client) {
       nome = nome.trim();
@@ -257,20 +258,37 @@ export function createOperations(
       });
       notify("Pagamento estornado; histórico preservado.");
     },
-    async markGroups(groups: { cid: string; ids: string[] }[]) {
+    async markGroups(
+      groups: { cid: string; ids: string[] }[],
+      { confirmTotal = false } = {},
+    ) {
       const plans = groups
-        .map((g) => ({
-          ...g,
-          plan: markPaidPlan(
-            account(g.cid).fichas,
-            account(g.cid).pagamentos,
-            g.ids,
-          ),
-        }))
+        .map((g) => {
+          const a = account(g.cid);
+          return { ...g, plan: markPaidPlan(a.fichas, a.pagamentos, g.ids) };
+        })
         .filter((g) => g.plan.targets.length);
       if (!plans.length) {
         notify("As fichas selecionadas já estão pagas.");
-        return;
+        return true;
+      }
+      if (confirmTotal) {
+        const fichas = plans.reduce((s, g) => s + g.plan.targets.length, 0),
+          created = plans.reduce((s, g) => s + g.plan.newAmount, 0),
+          reused = plans.reduce((s, g) => s + g.plan.reused, 0);
+        const details = [
+          created &&
+            `Será registrado um recebimento de ${fmtC(created)} com a data de hoje.`,
+          reused && `${fmtC(reused)} já recebidos serão vinculados.`,
+        ]
+          .filter(Boolean)
+          .join(" ");
+        if (
+          !confirm(
+            `Quitar ${fichas} ficha(s) de ${plans.length} cliente(s)? ${details}`.trim(),
+          )
+        )
+          return false;
       }
       let completed = 0;
       try {
@@ -321,6 +339,7 @@ export function createOperations(
           completed++;
         }
         notify("Fichas marcadas como pagas. Elas não entrarão nas notas.");
+        return true;
       } catch (error) {
         throw new Error(
           `${completed ? `${completed} cliente(s) já concluído(s). ` : ""}${errorMessage(error)}`,

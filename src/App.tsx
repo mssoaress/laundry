@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from "react";
 import { AppProvider, useApp } from "./hooks/useApp";
 import { Icon } from "./components/ui";
 import { AccessGate } from "./components/AccessGate";
+import { signOut } from "./data/auth";
 import { Modals } from "./components/Modals";
 import { Dashboard } from "./pages/Dashboard";
 import { Clients } from "./pages/Clients";
@@ -150,6 +151,13 @@ function Shell() {
                       disabled={!ready || busy}
                     >
                       Exportar backup
+                    </button>
+                    <button
+                      id="sign-out"
+                      onClick={() => void signOut()}
+                      disabled={busy}
+                    >
+                      Sair
                     </button>
                   </div>
                 </details>

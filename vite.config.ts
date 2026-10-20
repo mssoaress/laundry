@@ -17,6 +17,11 @@ export default defineConfig({
               includeDependenciesRecursively: false,
             },
             {
+              name: "auth",
+              test: /src\/data\/auth\.ts$/,
+              includeDependenciesRecursively: false,
+            },
+            {
               name: "note",
               test: /src\/services\/note\.ts$/,
               includeDependenciesRecursively: false,

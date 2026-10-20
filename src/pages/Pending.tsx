@@ -127,13 +127,14 @@ export function Pending() {
           className="btn-primary"
           onClick={() => {
             void run("settlePending", async () => {
-              await operations.markGroups(
+              const done = await operations.markGroups(
                 [...selected].map((cid) => ({
                   cid,
                   ids: [...account(cid).items.keys()],
                 })),
+                { confirmTotal: true },
               );
-              setSelection(new Set());
+              if (done) setSelection(new Set());
             });
           }}
         >

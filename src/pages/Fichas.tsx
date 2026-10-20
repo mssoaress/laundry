@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useApp } from "../hooks/useApp";
-import { byDate, fichaCents } from "../domain";
+import { byDate } from "../domain";
 import { fmtC, fmtN, MONTHS } from "../format";
 import { Empty, Heading, Icon, usePagination } from "../components/ui";
 import { FichaForm } from "../components/forms";
@@ -25,14 +25,16 @@ export function Fichas() {
     [month, setMonth] = useState(""),
     [year, setYear] = useState(""),
     years = useYears();
+  // Fichas sem cliente cadastrado não têm conta e ficam fora da lista.
   const list = db.lancamentos
       .filter(
         (f) =>
           !f.cancelada &&
           (!client || f.cid === client) &&
-          (!month || f.data.slice(5, 7) === month) &&
-          (!year || f.data.slice(0, 4) === year),
+          (!month || f.data?.slice(5, 7) === month) &&
+          (!year || f.data?.slice(0, 4) === year),
       )
+      .flatMap((f) => account(f.cid).items.get(f.id) ?? [])
       .sort((a, b) => byDate(b, a)),
     pagination = usePagination(list.length, `${client}:${month}:${year}`);
   return (
@@ -104,9 +106,7 @@ export function Fichas() {
         {list.length ? (
           list
             .slice(0, pagination.limit)
-            .map((f) => (
-              <FichaCard key={f.id} item={account(f.cid).items.get(f.id)!} />
-            ))
+            .map((f) => <FichaCard key={f.id} item={f} />)
         ) : (
           <Empty>Nenhuma ficha encontrada</Empty>
         )}
@@ -114,7 +114,7 @@ export function Fichas() {
       <div id="fichas-more">
         <p className="list-total">
           {fmtN(list.reduce((s, f) => s + Number(f.qtd), 0))} peças ·{" "}
-          {fmtC(list.reduce((s, f) => s + fichaCents(f), 0))}
+          {fmtC(list.reduce((s, f) => s + f.total, 0))}
         </p>
         {pagination.more}
       </div>

@@ -67,8 +67,8 @@ export function Clients() {
         />
         <Metric
           label="Total a receber"
-          value={fmtC(active.reduce((s, c) => s + account(c.id).due, 0))}
-          hint="Saldo dos clientes ativos"
+          value={fmtC(db.clientes.reduce((s, c) => s + account(c.id).due, 0))}
+          hint="Inclui clientes arquivados"
         />
         <Metric
           label="Clientes em dia"

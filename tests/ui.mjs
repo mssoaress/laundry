@@ -16,6 +16,7 @@ const errors = [];
 const dialogs = [];
 await mkdir("tests/artifacts", { recursive: true });
 const fixture = `
+export const app={};
 const state={clientes:[{id:'c1',nome:'Cliente de teste',tel:'83999999999'},{id:'c2',nome:'Recebimento sem ficha'}],lancamentos:[{id:'f1',cid:'c1',peca:'Calças',qtd:10,valor:10,lavado:'Amaciado',lavadoId:'s1',data:'2026-09-01'},{id:'f2',cid:'c1',peca:'Blusas',qtd:20,valor:10,lavado:'Amaciado',lavadoId:'s1',data:'2026-09-02'}],pagamentos:[{id:'p1',cid:'c1',valor:150,data:'2026-09-01'},{id:'p2',cid:'c2',valor:50,data:'2025-08-01'}],lavados:[{id:'s1',nome:'Amaciado',valor:10}]};
 const handlers={};let queue=Promise.resolve();window.__state=state;
 const emit=()=>Object.keys(handlers).forEach(col=>handlers[col](structuredClone(state[col]),{fromCache:false}));
@@ -26,6 +27,7 @@ export async function createClient(data,id=newId()){if(!state.clientes.some(c=>c
 export async function changeAccount(cid,operation){const task=queue.then(async()=>{await new Promise(r=>setTimeout(r,30));const mutations=operation({client:structuredClone(state.clientes.find(c=>c.id===cid)),fichas:structuredClone(state.lancamentos.filter(f=>f.cid===cid)),pagamentos:structuredClone(state.pagamentos.filter(p=>p.cid===cid))});for(const m of mutations||[]){let row=state[m.col].find(r=>r.id===m.id);if(row)Object.assign(row,m.data);else state[m.col].push({id:m.id,...m.data});}if(mutations?.length)emit();if(window.__failAfterCommit){window.__failAfterCommit=false;throw new Error('Resposta interrompida após gravar');}});queue=task.catch(()=>{});return task;}
 export async function saveService(data,id=newId()){const old=state.lavados.find(s=>s.id===id);if(old)Object.assign(old,data);else state.lavados.push({...data,id});emit();}
 `;
+const authFixture = `export const watchUser=(next)=>{queueMicrotask(()=>next({uid:'teste',email:'teste@example.test'}));return ()=>{};};export const signIn=async()=>{};export const signOut=async()=>{};`;
 await context.route("**/*", async (route) => {
   const url = new URL(route.request().url());
   if (url.hostname !== "127.0.0.1") {
@@ -42,9 +44,18 @@ await context.route("**/*", async (route) => {
     });
     return;
   }
+  if (
+    url.pathname === "/src/data/auth.ts" ||
+    /^\/assets\/auth-.*\.js$/.test(url.pathname)
+  ) {
+    await route.fulfill({
+      contentType: "application/javascript",
+      body: authFixture,
+    });
+    return;
+  }
   await route.continue();
 });
-await context.addInitScript(() => localStorage.setItem("le_auth_ok", "1"));
 const page = await context.newPage();
 page.on("pageerror", (e) => errors.push(e.message));
 page.on("dialog", (dialog) => {
@@ -211,6 +222,32 @@ try {
   await page.locator("#l-qtd").fill("3");
   await page.getByRole("button", { name: "Salvar ficha", exact: true }).click();
   await page.waitForFunction(() => window.__state.lancamentos.length === 3);
+  // Ficha de cliente inexistente não derruba a lista de fichas.
+  await page.evaluate(() => {
+    window.__state.lancamentos.push({
+      id: "orfa",
+      cid: "cliente-removido",
+      peca: "Ficha órfã",
+      qtd: 1,
+      valor: 5,
+      lavado: "Amaciado",
+      data: "2026-09-03",
+    });
+    window.__emit();
+  });
+  await page.waitForFunction(() =>
+    document.querySelector("#lanc-list")?.textContent.includes("Teste"),
+  );
+  assert.doesNotMatch(
+    await page.locator("#lanc-list").innerText(),
+    /Ficha órfã/,
+  );
+  await page.evaluate(() => {
+    window.__state.lancamentos = window.__state.lancamentos.filter(
+      (f) => f.id !== "orfa",
+    );
+    window.__emit();
+  });
   // Mobile e navegação de todas as páginas.
   await page.setViewportSize({ width: 390, height: 844 });
   for (const id of [

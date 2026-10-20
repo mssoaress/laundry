@@ -202,9 +202,10 @@ export function useAppModel() {
         return;
       case "settle":
         void run(`${name}:${id}`, () =>
-          operations.markGroups([
-            { cid: id, ids: [...account(id).items.keys()] },
-          ]),
+          operations.markGroups(
+            [{ cid: id, ids: [...account(id).items.keys()] }],
+            { confirmTotal: true },
+          ),
         );
         return;
       case "reverse":

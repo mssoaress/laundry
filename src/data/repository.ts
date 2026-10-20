@@ -19,7 +19,7 @@ import {
   runTransaction,
   serverTimestamp,
 } from "firebase/firestore";
-const app = initializeApp({
+export const app = initializeApp({
   apiKey: "AIzaSyDleTdgPI0bvoVN4DYNd6J5yZ9DU15dIn4",
   authDomain: "lavanderia-emanoel.firebaseapp.com",
   projectId: "lavanderia-emanoel",
