@@ -2267,3 +2267,53 @@ input:disabled {
     font-size: 0.75em;
   }
 }
+
+/* Nota exibida dentro do painel, sem depender de pop-up. */
+.note-preview {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  background: #edf2f9;
+}
+.note-preview-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  padding-top: max(10px, env(safe-area-inset-top));
+  background: #fff;
+  border-bottom: 1px solid #dbe5f2;
+  box-shadow: 0 2px 12px rgba(23, 61, 104, 0.08);
+}
+.note-preview-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.note-preview-info strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.note-preview-info small {
+  color: #5e7393;
+}
+.note-preview iframe {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background: #edf2f9;
+}
+@media (max-width: 600px) {
+  .note-preview-info small {
+    display: none;
+  }
+  .note-preview-bar .btn-primary,
+  .note-preview-bar .btn-ghost {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}

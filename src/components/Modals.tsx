@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useApp } from "../hooks/useApp";
 import { noteItems } from "../domain";
 import { fmtC, fmtN, formatDate } from "../format";
-import { printNote } from "../services/print";
+import { prepareNote, printFrame } from "../services/print";
 import { toggleSelected } from "./ui";
 import { ClientForm, FichaForm, PaymentForm } from "./forms";
 function Modal({
@@ -85,7 +85,7 @@ function Modal({
   );
 }
 function NoteSelector({ cid, onClose }: { cid: string; onClose: () => void }) {
-  const { account, run, notify, busy } = useApp(),
+  const { account, run, notify, busy, setModal } = useApp(),
     a = account(cid),
     items = noteItems(a.fichas, a.pagamentos),
     [selected, setSelected] = useState(() => new Set(items.map((f) => f.id))),
@@ -147,8 +147,15 @@ function NoteSelector({ cid, onClose }: { cid: string; onClose: () => void }) {
             void run("printNote", async () => {
               if (!selected.size)
                 throw new Error("Selecione pelo menos uma ficha.");
-              await printNote(cid, [...selected], notify);
-              onClose();
+              const note = await prepareNote(cid, [...selected]);
+              if (!note) {
+                onClose();
+                notify(
+                  "As fichas selecionadas já foram pagas. Nenhuma nota foi gerada.",
+                );
+                return;
+              }
+              setModal({ kind: "notePreview", ...note });
             });
           }}
         >
@@ -156,6 +163,109 @@ function NoteSelector({ cid, onClose }: { cid: string; onClose: () => void }) {
         </button>
       </div>
     </>
+  );
+}
+function NotePreview({
+  html,
+  title,
+  onClose,
+}: {
+  html: string;
+  title: string;
+  onClose: () => void;
+}) {
+  const { notify } = useApp(),
+    frame = useRef<HTMLIFrameElement>(null),
+    closeButton = useRef<HTMLButtonElement>(null),
+    [loaded, setLoaded] = useState(false),
+    [printing, setPrinting] = useState(false);
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
+    closeButton.current?.focus();
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeRef.current();
+    };
+    document.addEventListener("keydown", key);
+    return () => {
+      document.removeEventListener("keydown", key);
+      previous?.focus();
+    };
+  }, []);
+  return (
+    <div
+      id="note-preview"
+      className="note-preview"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="note-preview-title"
+    >
+      <div className="note-preview-bar">
+        <button
+          ref={closeButton}
+          type="button"
+          className="btn-ghost"
+          onClick={onClose}
+        >
+          Fechar
+        </button>
+        <div className="note-preview-info">
+          <strong id="note-preview-title">{title}</strong>
+          <small>
+            Na impressão, desative cabeçalhos e rodapés do navegador.
+          </small>
+        </div>
+        <button
+          id="note-print"
+          type="button"
+          className="btn-primary"
+          disabled={!loaded || printing}
+          onClick={async () => {
+            setPrinting(true);
+            try {
+              await printFrame(frame.current!, title);
+            } catch (error) {
+              notify(
+                error instanceof Error ? error.message : String(error),
+                true,
+              );
+            } finally {
+              setPrinting(false);
+            }
+          }}
+        >
+          Imprimir / Salvar PDF
+        </button>
+      </div>
+      <iframe
+        ref={frame}
+        id="note-frame"
+        title={title}
+        srcDoc={html}
+        onLoad={() => {
+          const doc = frame.current?.contentDocument,
+            win = frame.current?.contentWindow;
+          // Depois de imprimir o foco fica na nota; Esc também fecha a partir dela.
+          doc?.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") closeRef.current();
+          });
+          // Em telas estreitas, reduz a folha A5 na tela sem alterar a impressão.
+          const paper = doc?.querySelector<HTMLElement>(".paper");
+          const fit = () => {
+            if (!doc || !win || !paper) return;
+            const width = paper.offsetWidth + 16;
+            doc.documentElement.style.setProperty(
+              "--fit",
+              String(Math.min(1, win.innerWidth / width)),
+            );
+          };
+          fit();
+          win?.addEventListener("resize", fit);
+          setLoaded(true);
+        }}
+      />
+    </div>
   );
 }
 export function Modals() {
@@ -207,6 +317,15 @@ export function Modals() {
         >
           <NoteSelector cid={modal.cid} onClose={close} />
         </Modal>
+      );
+    case "notePreview":
+      return (
+        <NotePreview
+          key="note-preview"
+          html={modal.html}
+          title={modal.title}
+          onClose={close}
+        />
       );
   }
 }

@@ -101,4 +101,5 @@ export type ModalState =
   | { kind: "ficha"; ficha: Ficha }
   | { kind: "payment"; cid: string }
   | { kind: "note"; cid: string }
+  | { kind: "notePreview"; html: string; title: string }
   | null;

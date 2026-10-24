@@ -124,36 +124,42 @@ try {
   );
   await page.locator('[data-action="selectNote"]').click();
   assert.equal(await page.locator(".chk-nota").count(), 1);
-  const [popup] = await Promise.all([
-    page.waitForEvent("popup"),
-    page.getByRole("button", { name: "Gerar nota", exact: true }).click(),
-  ]);
-  await popup.waitForFunction(() =>
-    document.body.textContent.includes("Total a pagar"),
-  );
-  assert.match(await popup.locator("tbody").innerText(), /Blusas/);
-  assert.doesNotMatch(await popup.locator("tbody").innerText(), /Calças/);
-  assert.equal(await popup.locator(".whatsapp-icon").count(), 2);
+  // A nota abre dentro do painel, sem nova aba, para não depender de pop-up.
+  let popups = 0;
+  page.on("popup", () => popups++);
+  await page.getByRole("button", { name: "Gerar nota", exact: true }).click();
+  await page.locator("#note-preview").waitFor();
+  const note = page.frameLocator("#note-frame");
+  await note.locator(".verse").waitFor();
+  assert.match(await note.locator("tbody").innerText(), /Blusas/);
+  assert.doesNotMatch(await note.locator("tbody").innerText(), /Calças/);
+  assert.equal(await note.locator(".whatsapp-icon").count(), 2);
   assert.match(
-    await popup.locator(".verse").innerText(),
-    /Até aqui nos ajudou o Senhor/,
+    await note.locator(".verse").innerText(),
+    /1 Samuel 7:12: Até aqui nos ajudou o Senhor/,
   );
-  await popup.waitForFunction(() =>
+  assert.equal(await note.locator(".print-toolbar").count(), 0);
+  const noteFrame = page.frame({ url: "about:srcdoc" });
+  await noteFrame.waitForFunction(() =>
     [...document.images].every((img) => img.complete && img.naturalWidth > 0),
   );
-  await popup.pdf({
+  const notePdf = await context.newPage();
+  await notePdf.setContent(await noteFrame.content());
+  await notePdf.pdf({
     path: "tests/artifacts/nota-uma-ficha.pdf",
     preferCSSPageSize: true,
     printBackground: true,
   });
-  await popup.evaluate(() => {
+  await notePdf.close();
+  await noteFrame.evaluate(() => {
     window.__printed = 0;
     window.print = () => window.__printed++;
   });
-  await popup.locator("#print-note").click();
-  await popup.waitForFunction(() => window.__printed === 1);
-  assert.match(page.url(), /^http:\/\/127/);
-  await popup.close();
+  await page.locator("#note-print").click();
+  await noteFrame.waitForFunction(() => window.__printed === 1);
+  assert.equal(popups, 0, "A nota não deve abrir nova aba.");
+  await page.keyboard.press("Escape");
+  await page.locator("#note-preview").waitFor({ state: "detached" });
   await page
     .locator('#detalhe-fichas-abertas [data-action="payFicha"][data-id="f2"]')
     .click();
